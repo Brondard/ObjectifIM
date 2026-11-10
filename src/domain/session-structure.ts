@@ -56,6 +56,12 @@ export type Step = z.infer<typeof Step>;
 export type Repeat = z.infer<typeof Repeat>;
 export type SessionStructure = z.infer<typeof SessionStructure>;
 
+/** Lit une cible d'intensité stockée en JSONB ; null si absente ou invalide. */
+export function parseIntensity(value: unknown): Intensity | null {
+  const r = Intensity.safeParse(value);
+  return r.success ? r.data : null;
+}
+
 /** Déplie les répétitions en une liste linéaire d'étapes, dans l'ordre d'exécution. */
 export function flattenSteps(nodes: (Step | Repeat)[]): Step[] {
   return nodes.flatMap((node) =>

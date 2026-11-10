@@ -12,6 +12,7 @@ import { useSync } from "@/lib/sync/provider";
 import { manualCompletionOf, useCompletionsOf } from "@/lib/sync/queries";
 import { nowIso } from "@/lib/time";
 import { disciplineStyle } from "./discipline";
+import { TargetLines } from "./targets";
 
 const label = <T extends Record<string, string>>(map: T, key: string) => map[key as keyof T] ?? key;
 
@@ -54,6 +55,9 @@ export function SessionCard({ session }: { session: PlannedSession }) {
           {` · ${formatDuration(session.target_duration_s)}`}
           {session.target_distance_m ? ` · ${formatDistance(session.target_distance_m, session.discipline)}` : ""}
         </p>
+        <div className="mt-2">
+          <TargetLines session={session} />
+        </div>
         {session.instructions && <p className="mt-2 line-clamp-3 text-sm">{session.instructions}</p>}
       </Link>
 

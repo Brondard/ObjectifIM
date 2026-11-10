@@ -2,6 +2,8 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { compareLocalDates, type LocalDate } from "@/lib/time";
+import type { TargetContext } from "@/domain/targets";
+import type { ZoneModel } from "@/domain/zones";
 import type { CompletedSession, PlannedSession } from "./db";
 import { useSync } from "./provider";
 
@@ -70,4 +72,41 @@ export function manualCompletionOf(completions: CompletedSession[] | undefined) 
       ?.filter((c) => c.source === "manual")
       .sort((a, b) => (b.created_at ?? "").localeCompare(a.created_at ?? ""))[0] ?? null
   );
+}
+
+/** Repères, modèles de zones et règles de cible : tout ce qu'il faut pour résoudre une cible hors ligne. */
+export function useTargetContext(): TargetContext | undefined {
+  const { db } = useSync();
+  return useLiveQuery(async () => {
+    const [metrics, models, rules] = await Promise.all([
+      db.metrics.toArray(),
+      db.zone_models.toArray(),
+      db.engine_rules.where("rule_key").anyOf("default_intensity_by_type", "intensity_judgement").toArray(),
+    ]);
+    const params = (key: string) =>
+      (rules.find((r) => r.rule_key === key && !r.deleted_at)?.params ?? {}) as Record<string, unknown>;
+    return {
+      metrics: metrics.map((m) => ({ ...m, value: Number(m.value) })),
+      models: models as unknown as ZoneModel[],
+      rules: {
+        defaultZoneByType: params("default_intensity_by_type") as Record<string, number | null>,
+        judgementByType: (params("intensity_judgement").by_session_type ?? {}) as Record<string, string>,
+      },
+    };
+  }, [db]);
+}
+
+export function useMetrics() {
+  const { db } = useSync();
+  return useLiveQuery(async () => (await db.metrics.toArray()).filter((m) => !m.deleted_at), [db]);
+}
+
+export function useZoneModels() {
+  const { db } = useSync();
+  return useLiveQuery(async () => (await db.zone_models.toArray()).filter((m) => !m.deleted_at), [db]);
+}
+
+export function useRaces() {
+  const { db } = useSync();
+  return useLiveQuery(async () => (await db.races.toArray()).filter((r) => !r.deleted_at), [db]);
 }

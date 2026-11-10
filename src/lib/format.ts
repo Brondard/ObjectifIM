@@ -21,3 +21,50 @@ export function formatDelta(ratio: number | null): string {
   const pct = Math.round(ratio * 100);
   return `${pct > 0 ? "+" : pct < 0 ? "−" : "±"}${Math.abs(pct)} %`;
 }
+
+/** 330 → « 5:30 ». */
+export function formatClock(seconds: number): string {
+  const s = Math.round(seconds);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** « 5:30 » ou « 5'30 » ou « 330 » → 330 secondes ; null si illisible. */
+export function parseClock(text: string): number | null {
+  const t = text.trim();
+  const m = /^(\d{1,2})\s*[:'’]\s*(\d{1,2})"?$/.exec(t);
+  if (m) return Number(m[1]) * 60 + Number(m[2]);
+  return /^\d+$/.test(t) ? Number(t) : null;
+}
+
+const BASIS_UNIT: Record<string, string> = { hr: "bpm", power: "W", pace: "/km", swim_pace: "/100 m" };
+
+/** Plage absolue avec son unité ; pour une allure, du plus rapide au plus lent. */
+export function formatRange(basis: string, min: number | null, max: number | null): string {
+  const isPace = basis === "pace" || basis === "swim_pace";
+  const v = (n: number) => (isPace ? formatClock(n) : String(Math.round(n)));
+  const unit = BASIS_UNIT[basis] ?? "";
+  if (min != null && max != null) return `${v(min)}–${v(max)} ${unit}`;
+  if (min != null) return isPace ? `plus vite que ${v(min)} ${unit}` : `≥ ${v(min)} ${unit}`;
+  if (max != null) return isPace ? `plus lent que ${v(max)} ${unit}` : `≤ ${v(max)} ${unit}`;
+  return "";
+}
+
+/** Valeur d'un repère avec son unité (allures en min:s). */
+export function formatMetric(kind: string, value: number): string {
+  switch (kind) {
+    case "threshold_pace":
+      return `${formatClock(value)} /km`;
+    case "css":
+      return `${formatClock(value)} /100 m`;
+    case "vma":
+      return `${value} km/h`;
+    case "ftp":
+      return `${value} W`;
+    case "weight":
+      return `${value} kg`;
+    case "vo2max":
+      return `${value} ml/kg/min`;
+    default:
+      return `${value} bpm`;
+  }
+}

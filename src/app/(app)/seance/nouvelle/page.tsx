@@ -63,6 +63,7 @@ function NewSession() {
             target_distance_m: null,
             instructions: null,
             indoor: false,
+            target_intensity: null,
           }}
           onSubmit={async (values) => {
             await engine.mutate("planned_sessions", uuidv7(), { ...values, source: "manual" });

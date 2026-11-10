@@ -20,6 +20,8 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D13 | Lecture côté client | Les écrans lisent la copie locale Dexie via `useLiveQuery`, réactive aux écritures locales comme aux synchros. TanStack Query n'est pas utilisé : il ferait doublon avec Dexie. Il reste disponible pour les appels purement réseau (Strava, météo). |
 | D14 | Next 16 | `cacheComponents` désactivé : données pilotées côté client, et chaque lecture de session imposerait une frontière `<Suspense>`. |
 | D15 | Écritures | Toute écriture de l'interface passe par `SyncEngine.mutate` (local d'abord, file d'attente, RPC `apply_mutations`). Seuls les écrans Saisons, non encore réécrits, passent par des Server Actions. |
+| D16 | Cibles d’intensité | Une séance sans cible saisie prend la zone par défaut de son type (règle `default_intensity_by_type`), sur la grandeur qui juge ce type (règle `intensity_judgement`). Les bornes absolues sont recalculées à la date de la séance, avec la méthode et les repères affichés. Si un modèle ou un repère manque, l’écran le dit au lieu d’inventer. |
+| D17 | Tables synchronisables | Liste tenue par `public.sync_writable_tables()` (lecture seule, sans risque) ; l’étendre ne demande plus de réécrire `apply_mutations`. Le schéma `private` reste fermé aux utilisateurs. |
 | D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10 : les activités « Workout » n'ont aucun exercice). Saisie manuelle en priorité, pré-remplie. |
 
 ## Jugement de l'intensité (arbitrage 7)

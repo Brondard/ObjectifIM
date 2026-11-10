@@ -4,9 +4,11 @@
  */
 
 /** Tables modifiables depuis le client (doit rester un sous-ensemble de la liste de la RPC). */
-export const WRITABLE_TABLES = ["planned_sessions", "completed_sessions", "daily_logs", "plan_changes"] as const;
+export const WRITABLE_TABLES = [
+  "planned_sessions", "completed_sessions", "daily_logs", "plan_changes", "metrics", "zone_models",
+] as const;
 /** Tables lues et gardées en local pour fonctionner hors ligne. */
-export const PULL_TABLES = [...WRITABLE_TABLES, "seasons", "phases", "races", "session_templates"] as const;
+export const PULL_TABLES = [...WRITABLE_TABLES, "seasons", "phases", "races", "session_templates", "engine_rules"] as const;
 
 export type WritableTable = (typeof WRITABLE_TABLES)[number];
 export type PullTable = (typeof PULL_TABLES)[number];

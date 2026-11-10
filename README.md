@@ -44,7 +44,7 @@ supabase/        configuration et migrations
 |---|---|---|
 | 1 | Schéma, migrations, RLS, types, auth | livré |
 | 2 | Vues Aujourd'hui et Semaine, CRUD, validation en un geste | livré |
-| 3 | Repères, zones, cibles | |
+| 3 | Repères, zones, cibles | livré |
 | 4 | Strava | |
 | 5 | Moteur de replanification | |
 | 6 | Analyse | |

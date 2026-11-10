@@ -10,6 +10,9 @@ export type Season = Tables<"seasons">;
 export type Phase = Tables<"phases">;
 export type Race = Tables<"races">;
 export type SessionTemplate = Tables<"session_templates">;
+export type MetricRow = Tables<"metrics">;
+export type ZoneModelRow = Tables<"zone_models">;
+export type EngineRule = Tables<"engine_rules">;
 
 export type ConflictRecord = {
   key: string; // `${table}:${id}:${field}`
@@ -40,6 +43,9 @@ export class LocalDb extends Dexie {
   phases!: Table<Phase, string>;
   races!: Table<Race, string>;
   session_templates!: Table<SessionTemplate, string>;
+  metrics!: Table<MetricRow, string>;
+  zone_models!: Table<ZoneModelRow, string>;
+  engine_rules!: Table<EngineRule, string>;
   outbox!: Table<OutboxEntry, number>;
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
@@ -60,6 +66,12 @@ export class LocalDb extends Dexie {
       conflicts: "key",
       rejections: "mutation_id",
       meta: "key",
+    });
+    // Jalon 3 : repères, zones et règles (lecture des cibles par défaut).
+    this.version(2).stores({
+      metrics: "id, kind",
+      zone_models: "id",
+      engine_rules: "id, rule_key",
     });
   }
 

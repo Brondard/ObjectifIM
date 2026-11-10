@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { v7 as uuidv7 } from "uuid";
 import { disciplineStyle } from "@/components/discipline";
+import { ZoneTag } from "@/components/targets";
 import { DISCIPLINES, SESSION_TYPES, type Discipline } from "@/domain/labels";
 import { moveChange, planDuplicate, planMove } from "@/domain/planning";
 import { deltaRatio, dueBy, isDone, isSkipped, volumes, type Volume } from "@/domain/week";
@@ -191,7 +192,7 @@ function SessionChip({ session }: { session: PlannedSession }) {
           {session.title || `${style.short} ${SESSION_TYPES[session.session_type as keyof typeof SESSION_TYPES] ?? ""}`}
         </span>
         <span className="shrink-0 tabular-nums">
-          {done ? (session.status === "partial" ? "◐" : "✓") : formatDuration(session.target_duration_s)}
+          {done ? (session.status === "partial" ? "◐" : "✓") : <><ZoneTag session={session} /> {formatDuration(session.target_duration_s)}</>}
         </span>
       </Link>
     </div>

@@ -10,7 +10,7 @@ const NAV = [
   { href: "/", label: "Aujourd'hui" },
   { href: "/semaine", label: "Semaine" },
   { href: "/seance/nouvelle", label: "Ajouter" },
-  { href: "/saisons", label: "Saisons" },
+  { href: "/reglages", label: "Réglages" },
 ];
 
 export function AppChrome({ children }: { children: ReactNode }) {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CheckIn, DayNote } from "@/components/daily-log";
 import { disciplineStyle } from "@/components/discipline";
 import { SessionCard } from "@/components/session-card";
+import { RetestList } from "@/components/targets";
 import { DISCIPLINES } from "@/domain/labels";
 import { formatDistance, formatDuration } from "@/lib/format";
 import { useCompletedBetween, usePlannedBetween } from "@/lib/sync/queries";
@@ -51,6 +52,8 @@ export default function TodayPage() {
       </section>
 
       <CheckIn date={day} />
+
+      <RetestList includeMissing={false} />
 
       {next && next.length > 0 && (
         <section className="flex flex-col gap-1 text-sm">

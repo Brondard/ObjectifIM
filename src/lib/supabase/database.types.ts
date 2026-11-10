@@ -1807,6 +1807,7 @@ export type Database = {
     }
     Functions: {
       apply_mutations: { Args: { mutations: Json }; Returns: Json }
+      sync_writable_tables: { Args: never; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

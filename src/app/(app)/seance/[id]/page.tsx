@@ -3,6 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import { v7 as uuidv7 } from "uuid";
 import { Feedback } from "@/components/session-card";
+import { TargetLines, resolveStep, targetLabel } from "@/components/targets";
 import { SessionForm, valuesOf, type SessionFormValues } from "@/components/session-form";
 import { DISCIPLINES, SESSION_TYPES } from "@/domain/labels";
 import { moveChange, planMove } from "@/domain/planning";
@@ -10,7 +11,7 @@ import { flattenSteps, SessionStructure } from "@/domain/session-structure";
 import { formatDistance, formatDuration } from "@/lib/format";
 import { planFeedback } from "@/domain/marking";
 import { useSync } from "@/lib/sync/provider";
-import { useCompletionsOf, usePlanned } from "@/lib/sync/queries";
+import { useCompletionsOf, usePlanned, useTargetContext } from "@/lib/sync/queries";
 import { formatLocalDate, nowIso, type LocalDate } from "@/lib/time";
 
 export default function SessionPage() {
@@ -19,6 +20,7 @@ export default function SessionPage() {
   const engine = useSync();
   const session = usePlanned(id);
   const completions = useCompletionsOf(id)?.filter((c) => !c.deleted_at) ?? [];
+  const targetCtx = useTargetContext();
 
   if (session === undefined) return null;
   if (!session || session.deleted_at) return <p className="text-sm text-neutral-500">Séance introuvable ou supprimée.</p>;
@@ -27,7 +29,7 @@ export default function SessionPage() {
     if (!session) return;
     const before = valuesOf(session);
     const changed = Object.fromEntries(
-      Object.entries(values).filter(([k, v]) => v !== before[k as keyof SessionFormValues]),
+      Object.entries(values).filter(([k, v]) => JSON.stringify(v) !== JSON.stringify(before[k as keyof SessionFormValues])),
     ) as Partial<SessionFormValues> & Record<string, unknown>;
     if (!Object.keys(changed).length) return router.back();
     const writes = [];
@@ -64,13 +66,22 @@ export default function SessionPage() {
         )}
       </header>
 
+      <section className="flex flex-col gap-1">
+        <h2 className="font-medium">Cible</h2>
+        <TargetLines session={session} />
+      </section>
+
       {structure?.success && (
         <section className="flex flex-col gap-1 text-sm">
           <h2 className="font-medium">Structure</h2>
           <ol className="list-decimal pl-5">
             {flattenSteps(structure.data.steps).map((s, i) => (
               <li key={i}>
-                {s.kind} · {s.duration_s ? formatDuration(s.duration_s) : s.distance_m ? `${s.distance_m} m` : "libre"}
+                {STEP_LABELS[s.kind]} · {s.duration_s ? formatDuration(s.duration_s) : s.distance_m ? `${s.distance_m} m` : "libre"}
+                {(() => {
+                  const t = s.intensity ? resolveStep(session, s.intensity, targetCtx) : null;
+                  return t ? ` · ${targetLabel(t)}` : "";
+                })()}
                 {s.note ? ` · ${s.note}` : ""}
               </li>
             ))}
@@ -110,3 +121,11 @@ export default function SessionPage() {
     </div>
   );
 }
+
+const STEP_LABELS: Record<string, string> = {
+  warmup: "Échauffement",
+  work: "Effort",
+  recovery: "Récupération",
+  cooldown: "Retour au calme",
+  rest: "Repos",
+};
