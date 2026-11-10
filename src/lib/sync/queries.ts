@@ -1,7 +1,9 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import { compareLocalDates, type LocalDate } from "@/lib/time";
+import { catchupsIn } from "@/domain/engine/apply";
+import type { EngineContext } from "@/domain/engine/types";
+import { addDays, compareLocalDates, today, weekStart, type LocalDate } from "@/lib/time";
 import type { TargetContext } from "@/domain/targets";
 import type { ZoneModel } from "@/domain/zones";
 import type { CompletedSession, PlannedSession } from "./db";
@@ -113,4 +115,36 @@ export function useZoneModels() {
 export function useRaces() {
   const { db } = useSync();
   return useLiveQuery(async () => (await db.races.toArray()).filter((r) => !r.deleted_at), [db]);
+}
+
+/**
+ * Tout ce que le moteur de replanification lit, pour la semaine qui contient `anchor`.
+ * Lu dans la copie locale : le moteur tourne hors ligne.
+ */
+export function useEngineContext(anchor: LocalDate): EngineContext | undefined {
+  const { db } = useSync();
+  return useLiveQuery(async () => {
+    const start = weekStart(anchor);
+    const [sessions, done, phases, races, rules, substitutions, changes] = await Promise.all([
+      db.planned_sessions.where("date").between(addDays(start, -7), addDays(start, 13), true, true).toArray(),
+      db.completed_sessions.where("local_date").between(addDays(start, -35), addDays(start, 6), true, true).toArray(),
+      db.phases.toArray(),
+      db.races.toArray(),
+      db.engine_rules.toArray(),
+      db.substitutions.toArray(),
+      db.plan_changes.toArray(),
+    ]);
+    const phase = phases.find((p) => !p.deleted_at && p.start_date <= anchor && p.end_date >= anchor) ?? null;
+    return {
+      today: today(),
+      sessions: sessions.filter((s) => !s.deleted_at) as EngineContext["sessions"],
+      done: done.filter((d) => !d.deleted_at) as EngineContext["done"],
+      rules: rules.filter((r) => !r.deleted_at).map((r) => ({ ...r, weight: Number(r.weight), params: (r.params ?? {}) as Record<string, unknown> })),
+      phaseType: phase?.type ?? null,
+      phaseParams: (phase?.engine_params ?? {}) as Record<string, unknown>,
+      aRaceDates: races.filter((r) => !r.deleted_at && r.priority === "A").map((r) => r.date),
+      substitutions: substitutions.filter((x) => !x.deleted_at).map((x) => ({ ...x, duration_ratio: Number(x.duration_ratio) })),
+      catchupsThisWeek: catchupsIn(changes, start, addDays(start, 6)),
+    };
+  }, [db, anchor]);
 }

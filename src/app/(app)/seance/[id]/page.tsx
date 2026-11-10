@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { v7 as uuidv7 } from "uuid";
 import { MatchPrompt, RealizedAnalysis } from "@/components/realized";
@@ -110,6 +111,15 @@ export default function SessionPage() {
           ))}
         </section>
       )}
+
+      <div className="flex flex-wrap gap-2 text-sm">
+        <Link href={`/replanifier?kind=move&session=${session.id}`} className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700">
+          Je dois la déplacer
+        </Link>
+        <Link href={`/replanifier?kind=short_time&session=${session.id}`} className="rounded-md border border-neutral-300 px-3 py-2 dark:border-neutral-700">
+          J&apos;ai moins de temps
+        </Link>
+      </div>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-medium">Modifier</h2>

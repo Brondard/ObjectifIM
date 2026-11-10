@@ -47,7 +47,7 @@ supabase/        configuration et migrations
 | 2 | Vues Aujourd'hui et Semaine, CRUD, validation en un geste | livré |
 | 3 | Repères, zones, cibles | livré |
 | 4 | Strava | livré (à brancher : app Strava + variables) |
-| 5 | Moteur de replanification | |
+| 5 | Moteur de replanification | livré |
 | 6 | Analyse | |
 | 7 | Courses | |
 | 8 | PWA, hors ligne, notifications, ICS | |

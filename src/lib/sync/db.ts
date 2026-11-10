@@ -14,6 +14,7 @@ export type SessionTemplate = Tables<"session_templates">;
 export type MetricRow = Tables<"metrics">;
 export type ZoneModelRow = Tables<"zone_models">;
 export type EngineRule = Tables<"engine_rules">;
+export type SubstitutionRow = Tables<"substitutions">;
 
 export type ConflictRecord = {
   key: string; // `${table}:${id}:${field}`
@@ -47,6 +48,7 @@ export class LocalDb extends Dexie {
   metrics!: Table<MetricRow, string>;
   zone_models!: Table<ZoneModelRow, string>;
   engine_rules!: Table<EngineRule, string>;
+  substitutions!: Table<SubstitutionRow, string>;
   outbox!: Table<OutboxEntry, number>;
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
@@ -78,6 +80,8 @@ export class LocalDb extends Dexie {
     });
     // Jalon 4 : flux Strava en cache.
     this.version(3).stores({ streams: "id" });
+    // Jalon 5 : table de substitutions du mode déplacement.
+    this.version(4).stores({ substitutions: "id" });
   }
 
   rows(table: PullTable): Table<Record<string, unknown> & { id: string }, string> {

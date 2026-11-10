@@ -128,11 +128,16 @@ function Week() {
 
       <p className="text-xs text-neutral-500">Appui long (ou glisser à la souris) sur une séance pour la déplacer.</p>
 
-      {!!planned?.length && (
-        <button onClick={() => void duplicate()} className="self-start text-sm underline">
-          Dupliquer vers la semaine suivante
-        </button>
-      )}
+      <div className="flex flex-wrap gap-4 text-sm">
+        <Link href={`/replanifier?d=${from}&from=${now > from ? now : from}&to=${to}`} className="underline">
+          Replanifier cette semaine
+        </Link>
+        {!!planned?.length && (
+          <button onClick={() => void duplicate()} className="underline">
+            Dupliquer vers la semaine suivante
+          </button>
+        )}
+      </div>
     </div>
   );
 }

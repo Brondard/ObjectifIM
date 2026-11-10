@@ -6,7 +6,7 @@ import { alive, type PlannedLike } from "./week";
  * Déplacer une séance garde sa date d'origine (arbitrage 2 : pas de statut `moved`).
  * Revenir à la date d'origine efface la trace du déplacement.
  */
-export function planMove(session: PlannedLike, to: LocalDate) {
+export function planMove(session: { date: string; original_date?: string | null }, to: LocalDate) {
   const origin = session.original_date ?? session.date;
   return { date: to, original_date: to === origin ? null : origin };
 }

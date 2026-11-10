@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { v7 as uuidv7 } from "uuid";
 import { inputClass, Field } from "@/components/session-form";
+import { EngineRulesSettings, SubstitutionsSettings } from "@/components/engine-settings";
 import { StravaSettings } from "@/components/strava-settings";
 import { RetestList } from "@/components/targets";
 import { BASES, DISCIPLINES, METHODS, METRICS, ZONE_SETUPS } from "@/domain/labels";
@@ -31,6 +32,8 @@ export default function SettingsPage() {
       <StravaSettings />
       <MetricsSection metrics={metrics} />
       <ZonesSection metrics={metrics} models={models} />
+      <EngineRulesSettings />
+      <SubstitutionsSettings />
     </div>
   );
 }

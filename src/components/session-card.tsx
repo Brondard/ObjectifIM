@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { v7 as uuidv7 } from "uuid";
 import { DISCIPLINES, PRIORITIES, SESSION_TYPES, SKIP_REASONS } from "@/domain/labels";
@@ -24,6 +25,7 @@ const label = <T extends Record<string, string>>(map: T, key: string) => map[key
  */
 export function SessionCard({ session }: { session: PlannedSession }) {
   const engine = useSync();
+  const router = useRouter();
   const completions = useCompletionsOf(session.id);
   const manual = manualCompletionOf(completions);
   const alive = completions?.filter((c) => !c.deleted_at) ?? [];
@@ -41,6 +43,8 @@ export function SessionCard({ session }: { session: PlannedSession }) {
     const writes = planMark(session, m, { manualCompletion: manual, newId: uuidv7(), at: nowIso() });
     await engine.mutateMany(writes);
     setPanel("none");
+    // Une séance clé manquée déclenche une proposition de replanification (jamais appliquée seule).
+    if (m.kind === "skipped" && session.priority === "key") router.push(`/replanifier?kind=missed&session=${session.id}`);
   }
 
   const style = disciplineStyle(session.discipline);
