@@ -41,6 +41,12 @@ export function disciplineOf(sportType: string): "swim" | "bike" | "run" | "stre
 
 const int = (v: number | undefined | null) => (v == null ? null : Math.round(v));
 
+/** FC plausible ou rien : Strava renvoie parfois 0 ou une valeur absurde quand le capteur a décroché. */
+const heartRate = (v: number | undefined | null) => {
+  const n = int(v);
+  return n != null && n >= 25 && n <= 250 ? n : null;
+};
+
 /** Champs d'une séance réalisée issus de Strava. Ne touche jamais au RPE, au ressenti ni au rattachement. */
 export function completedFieldsFrom(a: StravaActivity) {
   return {
@@ -56,8 +62,8 @@ export function completedFieldsFrom(a: StravaActivity) {
     moving_s: a.moving_time,
     distance_m: a.distance,
     elevation_gain_m: a.total_elevation_gain ?? null,
-    avg_hr: int(a.average_heartrate),
-    max_hr: int(a.max_heartrate),
+    avg_hr: heartRate(a.average_heartrate),
+    max_hr: heartRate(a.max_heartrate),
     avg_cadence: a.average_cadence ?? null,
     avg_power: a.average_watts ?? null,
     np_power: a.weighted_average_watts ?? null,

@@ -24,6 +24,11 @@ describe("activité Strava", () => {
     expect(f).not.toHaveProperty("planned_session_id");
   });
 
+  it("traite une FC absurde comme absente plutôt que de bloquer l’import", () => {
+    expect(completedFieldsFrom({ ...activity, average_heartrate: 0, max_heartrate: 0 })).toMatchObject({ avg_hr: null, max_hr: null });
+    expect(completedFieldsFrom({ ...activity, average_heartrate: 12.4, max_heartrate: 255 })).toMatchObject({ avg_hr: null, max_hr: null });
+  });
+
   it("lit les flux par type", () => {
     expect(streamsFrom({ time: { data: [0, 1] }, heartrate: { data: [100, 101] }, foo: { data: [1] } })).toEqual({ time: [0, 1], heartrate: [100, 101] });
     expect(streamsFrom({ heartrate: { data: [1] } })).toBeNull();
