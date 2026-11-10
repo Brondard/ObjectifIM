@@ -11,7 +11,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "gen:schemas": "tsx scripts/gen-schemas.ts",
     "gen:types": "supabase gen types typescript --remote --schema public > src/lib/supabase/database.types.ts",
-    "db:push": "supabase db push --remote"
+    "db:push": "supabase db push --remote",
+    "strava:subscribe": "node --env-file=.env.local --import tsx scripts/strava-subscribe.ts"
   },
   "dependencies": {
     "@date-fns/tz": "^1.5.0",

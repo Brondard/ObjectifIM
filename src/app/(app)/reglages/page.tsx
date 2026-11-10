@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { v7 as uuidv7 } from "uuid";
 import { inputClass, Field } from "@/components/session-form";
+import { StravaSettings } from "@/components/strava-settings";
 import { RetestList } from "@/components/targets";
 import { BASES, DISCIPLINES, METHODS, METRICS, ZONE_SETUPS } from "@/domain/labels";
 import { PRESETS, computeZones, metricAt, zoneModelAt, type Bound, type Method, type MetricKind, type ZoneModel } from "@/domain/zones";
@@ -27,6 +28,7 @@ export default function SettingsPage() {
         <Link href="/saisons" className="text-sm underline">Saisons et phases</Link>
       </header>
       <RetestList />
+      <StravaSettings />
       <MetricsSection metrics={metrics} />
       <ZonesSection metrics={metrics} models={models} />
     </div>

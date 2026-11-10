@@ -41,7 +41,7 @@ export class SyncEngine {
 
   constructor(
     readonly db: LocalDb,
-    private supabase: SupabaseClient<Database>,
+    readonly supabase: SupabaseClient<Database>,
   ) {}
 
   // ─── État observable (useSyncExternalStore) ──────────────────────────────

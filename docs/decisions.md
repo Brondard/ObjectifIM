@@ -22,6 +22,9 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D15 | Écritures | Toute écriture de l'interface passe par `SyncEngine.mutate` (local d'abord, file d'attente, RPC `apply_mutations`). Seuls les écrans Saisons, non encore réécrits, passent par des Server Actions. |
 | D16 | Cibles d’intensité | Une séance sans cible saisie prend la zone par défaut de son type (règle `default_intensity_by_type`), sur la grandeur qui juge ce type (règle `intensity_judgement`). Les bornes absolues sont recalculées à la date de la séance, avec la méthode et les repères affichés. Si un modèle ou un repère manque, l’écran le dit au lieu d’inventer. |
 | D17 | Tables synchronisables | Liste tenue par `public.sync_writable_tables()` (lecture seule, sans risque) ; l’étendre ne demande plus de réécrire `apply_mutations`. Le schéma `private` reste fermé aux utilisateurs. |
+| D18 | Strava côté serveur | Jetons et file du webhook dans `private`, lus par des fonctions `strava_*` réservées au rôle de service (clé secrète Supabase, serveur uniquement). Le client ne voit que `strava_status()`, sans jeton. Le webhook acquitte tout de suite et traite après la réponse (`after`) ; les échecs sont retentés chaque nuit (Vercel Cron). |
+| D19 | Rapprochement | L’import propose (même jour, même discipline, durée la plus proche) ; l’utilisateur confirme toujours. Confirmer reprend RPE et ressenti d’une saisie manuelle et la retire pour ne pas compter deux fois le volume. |
+| D20 | Flux | Téléchargés une fois depuis Strava (à la création via webhook, sinon à la demande), compressés dans Storage, mis en cache dans IndexedDB. L’analyse d’intensité tourne côté client et son résultat est gardé dans `completed_sessions.analysis` (versionné). |
 | D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10 : les activités « Workout » n'ont aucun exercice). Saisie manuelle en priorité, pré-remplie. |
 
 ## Jugement de l'intensité (arbitrage 7)

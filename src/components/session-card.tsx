@@ -12,7 +12,9 @@ import { useSync } from "@/lib/sync/provider";
 import { manualCompletionOf, useCompletionsOf } from "@/lib/sync/queries";
 import { nowIso } from "@/lib/time";
 import { disciplineStyle } from "./discipline";
+import { IntensityVerdict, MatchPrompt } from "./realized";
 import { TargetLines } from "./targets";
+import { storedAnalysis } from "@/lib/sync/streams";
 
 const label = <T extends Record<string, string>>(map: T, key: string) => map[key as keyof T] ?? key;
 
@@ -24,7 +26,14 @@ export function SessionCard({ session }: { session: PlannedSession }) {
   const engine = useSync();
   const completions = useCompletionsOf(session.id);
   const manual = manualCompletionOf(completions);
-  const active = completions?.find((c) => !c.deleted_at) ?? null;
+  const alive = completions?.filter((c) => !c.deleted_at) ?? [];
+  // Le réalisé importé confirmé prime sur une saisie manuelle.
+  const active =
+    alive.find((c) => c.source !== "manual" && c.match_status === "confirmed") ??
+    alive.find((c) => c.match_status !== "suggested") ??
+    null;
+  const suggested = alive.find((c) => c.match_status === "suggested") ?? null;
+  const analysis = storedAnalysis(active);
   const [panel, setPanel] = useState<"none" | "partial" | "skip">("none");
   const [partialMin, setPartialMin] = useState("");
 
@@ -60,6 +69,12 @@ export function SessionCard({ session }: { session: PlannedSession }) {
         </div>
         {session.instructions && <p className="mt-2 line-clamp-3 text-sm">{session.instructions}</p>}
       </Link>
+
+      {suggested && (
+        <div className="mt-4">
+          <MatchPrompt completion={suggested} planned={session} />
+        </div>
+      )}
 
       {!done && !skipped && panel === "none" && (
         <div className="mt-4 grid grid-cols-3 gap-2">
@@ -129,6 +144,7 @@ export function SessionCard({ session }: { session: PlannedSession }) {
             text={`${session.status === "partial" ? "Partielle" : "Faite"}${active ? ` · ${formatDuration(active.moving_s ?? active.elapsed_s)}` : ""}`}
             onUndo={() => void mark({ kind: "reset" })}
           />
+          {analysis && <IntensityVerdict analysis={analysis} />}
           {active && (
             <Feedback
               key={active.id}

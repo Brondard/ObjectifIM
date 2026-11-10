@@ -15,7 +15,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { v7 as uuidv7 } from "uuid";
 import { disciplineStyle } from "@/components/discipline";
+import { IntensityVerdict } from "@/components/realized";
 import { ZoneTag } from "@/components/targets";
+import { storedAnalysis } from "@/lib/sync/streams";
 import { DISCIPLINES, SESSION_TYPES, type Discipline } from "@/domain/labels";
 import { moveChange, planDuplicate, planMove } from "@/domain/planning";
 import { deltaRatio, dueBy, isDone, isSkipped, volumes, type Volume } from "@/domain/week";
@@ -118,6 +120,7 @@ function Week() {
               isToday={d === now}
               planned={planned?.filter((s) => s.date === d) ?? []}
               unplanned={completed?.filter((c) => c.local_date === d && !c.planned_session_id) ?? []}
+              linked={completed?.filter((c) => c.planned_session_id) ?? []}
             />
           ))}
         </div>
@@ -139,11 +142,13 @@ function Day({
   isToday,
   planned,
   unplanned,
+  linked,
 }: {
   date: LocalDate;
   isToday: boolean;
   planned: PlannedSession[];
   unplanned: CompletedSession[];
+  linked: CompletedSession[];
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: date });
   return (
@@ -161,17 +166,21 @@ function Day({
           +
         </Link>
       </div>
-      {planned.map((s) => <SessionChip key={s.id} session={s} />)}
+      {planned.map((s) => (
+        <SessionChip key={s.id} session={s} completions={linked.filter((c) => c.planned_session_id === s.id)} />
+      ))}
       {unplanned.map((c) => (
         <div key={c.id} className={`rounded border border-l-4 border-dashed border-neutral-300 px-2 py-1 text-xs dark:border-neutral-700 ${disciplineStyle(c.discipline).bar}`}>
-          Imprévue · {disciplineStyle(c.discipline).short} · {formatDuration(c.moving_s ?? c.elapsed_s)}
+          {c.source === "strava" ? c.name : "Imprévue"} · {disciplineStyle(c.discipline).short} · {formatDuration(c.moving_s ?? c.elapsed_s)}
         </div>
       ))}
     </section>
   );
 }
 
-function SessionChip({ session }: { session: PlannedSession }) {
+function SessionChip({ session, completions }: { session: PlannedSession; completions: CompletedSession[] }) {
+  const suggested = completions.some((c) => c.match_status === "suggested");
+  const analysis = storedAnalysis(completions.find((c) => c.match_status === "confirmed" && c.source !== "manual") ?? null);
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: session.id });
   const style = disciplineStyle(session.discipline);
   const done = isDone(session.status);
@@ -192,6 +201,8 @@ function SessionChip({ session }: { session: PlannedSession }) {
           {session.title || `${style.short} ${SESSION_TYPES[session.session_type as keyof typeof SESSION_TYPES] ?? ""}`}
         </span>
         <span className="shrink-0 tabular-nums">
+          {suggested && <span className="text-sky-600" title="Activité Strava à confirmer">? </span>}
+          {analysis && <><IntensityVerdict analysis={analysis} compact /> </>}
           {done ? (session.status === "partial" ? "◐" : "✓") : <><ZoneTag session={session} /> {formatDuration(session.target_duration_s)}</>}
         </span>
       </Link>

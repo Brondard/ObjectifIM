@@ -24,6 +24,7 @@ npm run dev
 | `npm run db:push` | Applique les migrations de `supabase/migrations` au projet distant |
 | `npm run gen:types` | Régénère `src/lib/supabase/database.types.ts` depuis la base |
 | `npm run gen:schemas` | Régénère `schemas/*.json` depuis Zod (un test échoue s'ils divergent) |
+| `npm run strava:subscribe -- <url>/api/strava/webhook` | Crée l’abonnement webhook Strava (une fois, app déployée) |
 | `npx supabase db query --remote --yes -f supabase/tests/apply_mutations.sql` | Teste la RPC de synchro sur la base (tout est annulé ; attendu : « TESTS OK ») |
 
 Le schéma ne se modifie **que** par une nouvelle migration versionnée, jamais dans l'interface Supabase.
@@ -45,7 +46,7 @@ supabase/        configuration et migrations
 | 1 | Schéma, migrations, RLS, types, auth | livré |
 | 2 | Vues Aujourd'hui et Semaine, CRUD, validation en un geste | livré |
 | 3 | Repères, zones, cibles | livré |
-| 4 | Strava | |
+| 4 | Strava | livré (à brancher : app Strava + variables) |
 | 5 | Moteur de replanification | |
 | 6 | Analyse | |
 | 7 | Courses | |

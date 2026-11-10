@@ -108,6 +108,19 @@ export function formatLocalDate(date: LocalDate, options: Intl.DateTimeFormatOpt
   return new Intl.DateTimeFormat("fr-FR", { ...options, timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
+/**
+ * Jour d'une heure locale « naïve » (ex. start_date_local de Strava, « 2026-10-25T08:30:00Z » dont le Z
+ * est trompeur : c'est l'heure du lieu, pas de l'UTC).
+ */
+export function localDateFromLocalIso(value: string): LocalDate {
+  return localDate(value.slice(0, 10));
+}
+
+/** Instant ISO d'un horodatage Unix en secondes (jetons OAuth). */
+export function isoFromEpochSeconds(seconds: number): string {
+  return new Date(seconds * 1000).toISOString();
+}
+
 /** Instant présent au format ISO (horodatages techniques : suppression logique, etc.). */
 export function nowIso(): string {
   return now().toISOString();

@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { CheckIn, DayNote } from "@/components/daily-log";
 import { disciplineStyle } from "@/components/discipline";
-import { SessionCard } from "@/components/session-card";
+import { AttachPicker, activitySummary } from "@/components/realized";
+import { Feedback, SessionCard } from "@/components/session-card";
+import { planFeedback } from "@/domain/marking";
+import { useSync } from "@/lib/sync/provider";
 import { RetestList } from "@/components/targets";
 import { DISCIPLINES } from "@/domain/labels";
-import { formatDistance, formatDuration } from "@/lib/format";
+import { formatDuration } from "@/lib/format";
 import { useCompletedBetween, usePlannedBetween } from "@/lib/sync/queries";
 import { addDays, formatLocalDate, today } from "@/lib/time";
 
 /** Écran d'accueil mobile : la séance du jour en grand, le check-in, la validation en un geste. */
 export default function TodayPage() {
+  const engine = useSync();
   const day = today();
   const planned = usePlannedBetween(day, day);
   const completed = useCompletedBetween(day, day);
@@ -36,10 +40,13 @@ export default function TodayPage() {
         )}
 
         {unplanned.map((c) => (
-          <div key={c.id} className={`rounded-lg border border-l-4 border-dashed border-neutral-300 p-3 text-sm dark:border-neutral-700 ${disciplineStyle(c.discipline).bar}`}>
-            Imprévue · {DISCIPLINES[c.discipline as keyof typeof DISCIPLINES]} · {formatDuration(c.moving_s ?? c.elapsed_s)}
-            {c.distance_m ? ` · ${formatDistance(c.distance_m, c.discipline)}` : ""}
-            {c.rpe ? ` · RPE ${c.rpe}` : ""}
+          <div key={c.id} className={`flex flex-col gap-2 rounded-lg border border-l-4 border-dashed border-neutral-300 p-3 text-sm dark:border-neutral-700 ${disciplineStyle(c.discipline).bar}`}>
+            <p>
+              {c.source === "strava" ? <>Strava · <strong>{c.name}</strong></> : "Imprévue"} ·{" "}
+              {DISCIPLINES[c.discipline as keyof typeof DISCIPLINES]} · {activitySummary(c)}
+            </p>
+            {c.source === "strava" && <AttachPicker completion={c} candidates={planned ?? []} />}
+            <Feedback key={c.id} rpe={c.rpe} feeling={c.feeling} onChange={(rpe, feeling) => void engine.mutateMany([planFeedback(c.id, rpe, feeling)])} />
           </div>
         ))}
 

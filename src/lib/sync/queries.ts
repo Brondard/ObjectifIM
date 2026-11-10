@@ -91,6 +91,10 @@ export function useTargetContext(): TargetContext | undefined {
       rules: {
         defaultZoneByType: params("default_intensity_by_type") as Record<string, number | null>,
         judgementByType: (params("intensity_judgement").by_session_type ?? {}) as Record<string, string>,
+        intensity: {
+          skipFirstS: Number(params("intensity_judgement").hr_skip_first_s ?? 180),
+          alertPct: Number(params("intensity_judgement").hr_above_ceiling_alert_pct ?? 15),
+        },
       },
     };
   }, [db]);

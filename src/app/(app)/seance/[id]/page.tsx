@@ -2,13 +2,14 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { v7 as uuidv7 } from "uuid";
+import { MatchPrompt, RealizedAnalysis } from "@/components/realized";
 import { Feedback } from "@/components/session-card";
 import { TargetLines, resolveStep, targetLabel } from "@/components/targets";
 import { SessionForm, valuesOf, type SessionFormValues } from "@/components/session-form";
 import { DISCIPLINES, SESSION_TYPES } from "@/domain/labels";
 import { moveChange, planMove } from "@/domain/planning";
 import { flattenSteps, SessionStructure } from "@/domain/session-structure";
-import { formatDistance, formatDuration } from "@/lib/format";
+import { formatDuration } from "@/lib/format";
 import { planFeedback } from "@/domain/marking";
 import { useSync } from "@/lib/sync/provider";
 import { useCompletionsOf, usePlanned, useTargetContext } from "@/lib/sync/queries";
@@ -94,11 +95,11 @@ export default function SessionPage() {
           <h2 className="font-medium">Réalisé</h2>
           {completions.map((c) => (
             <div key={c.id} className="flex flex-col gap-2 rounded-lg border border-neutral-200 p-3 dark:border-neutral-800">
-              <p className="text-sm">
-                {formatDuration(c.moving_s ?? c.elapsed_s)} réalisées sur {formatDuration(session.target_duration_s)} prévues
-                {c.distance_m ? ` · ${formatDistance(c.distance_m, c.discipline)}` : ""}
-                {c.source !== "manual" ? ` · ${c.source}` : ""}
-              </p>
+              {c.match_status === "suggested" ? (
+                <MatchPrompt completion={c} planned={session} />
+              ) : (
+                <RealizedAnalysis planned={session} completion={c} />
+              )}
               <Feedback
                 key={c.id}
                 rpe={c.rpe}

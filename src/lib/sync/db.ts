@@ -1,5 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type { Tables } from "@/lib/supabase/database.types";
+import type { Streams } from "@/domain/strava";
 import type { OutboxEntry, PullTable } from "./core";
 
 export type PlannedSession = Tables<"planned_sessions">;
@@ -50,6 +51,8 @@ export class LocalDb extends Dexie {
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
   meta!: Table<{ key: string; value: unknown }, string>;
+  /** Cache local des flux (gros volumes, jamais retéléchargés). Clé : id de la séance réalisée. */
+  streams!: Table<{ id: string; data: Streams }, string>;
 
   constructor(readonly userId: string) {
     super(`objectifim-${userId}`);
@@ -73,6 +76,8 @@ export class LocalDb extends Dexie {
       zone_models: "id",
       engine_rules: "id, rule_key",
     });
+    // Jalon 4 : flux Strava en cache.
+    this.version(3).stores({ streams: "id" });
   }
 
   rows(table: PullTable): Table<Record<string, unknown> & { id: string }, string> {

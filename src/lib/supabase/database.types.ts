@@ -1807,6 +1807,64 @@ export type Database = {
     }
     Functions: {
       apply_mutations: { Args: { mutations: Json }; Returns: Json }
+      strava_connection: {
+        Args: { p_athlete?: number; p_user?: string }
+        Returns: {
+          access_token: string
+          athlete_id: number
+          expires_at: string
+          refresh_token: string
+          user_id: string
+        }[]
+      }
+      strava_delete_connection: { Args: { p_user: string }; Returns: undefined }
+      strava_enqueue_event: { Args: { p: Json }; Returns: number }
+      strava_finish_event: {
+        Args: { p_error?: string; p_id: number }
+        Returns: undefined
+      }
+      strava_mark_import: { Args: { p_user: string }; Returns: undefined }
+      strava_pending_events: {
+        Args: { p_limit?: number }
+        Returns: unknown[]
+        SetofOptions: {
+          from: "*"
+          to: "strava_events"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      strava_save_connection: {
+        Args: {
+          p_access: string
+          p_athlete: number
+          p_expires: string
+          p_refresh: string
+          p_scopes: string[]
+          p_user: string
+        }
+        Returns: undefined
+      }
+      strava_status: {
+        Args: never
+        Returns: {
+          athlete_id: number
+          connected_at: string
+          failed_events: number
+          last_event_at: string
+          last_import_at: string
+          scopes: string[]
+        }[]
+      }
+      strava_update_tokens: {
+        Args: {
+          p_access: string
+          p_expires: string
+          p_refresh: string
+          p_user: string
+        }
+        Returns: undefined
+      }
       sync_writable_tables: { Args: never; Returns: string[] }
     }
     Enums: {

@@ -14,6 +14,8 @@ export type TargetRules = {
   defaultZoneByType: Record<string, number | null>;
   /** Type de séance (course à pied) → critère : hr, pace, pace_then_hr, both. */
   judgementByType: Record<string, string>;
+  /** Paramètres du jugement sur les flux (règle intensity_judgement). */
+  intensity?: { skipFirstS: number; alertPct: number };
 };
 
 export type TargetContext = { models: ZoneModel[]; metrics: Metric[]; rules: TargetRules };

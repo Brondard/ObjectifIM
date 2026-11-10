@@ -1,7 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+// Le webhook et la tâche planifiée n'ont pas de session : ils s'authentifient autrement.
+const PUBLIC_PATHS = ["/login", "/auth", "/api/strava/webhook", "/api/strava/process"];
 
 /** Rafraîchit la session Supabase à chaque requête et renvoie vers /login si elle est absente. */
 export async function proxy(request: NextRequest) {
@@ -26,6 +27,9 @@ export async function proxy(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const isPublic = PUBLIC_PATHS.some((p) => request.nextUrl.pathname.startsWith(p));
   if (!data?.claims && !isPublic) {
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "non connecté" }, { status: 401 });
+    }
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
