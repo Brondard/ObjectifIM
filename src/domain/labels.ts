@@ -50,6 +50,21 @@ export const PLANNED_STATUSES = {
   skipped_injury: "Manquée (blessure)",
 } as const;
 
+/** Types proposés par discipline à la saisie (la base accepte toute combinaison). */
+export const TYPES_BY_DISCIPLINE: Record<keyof typeof DISCIPLINES, (keyof typeof SESSION_TYPES)[]> = {
+  run: ["endurance", "long", "recovery", "tempo", "threshold", "vo2", "short_reps", "race_pace", "race"],
+  bike: ["endurance", "long", "recovery", "tempo", "threshold", "vo2", "race_pace", "race"],
+  swim: ["endurance", "technique", "threshold", "vo2", "short_reps", "recovery", "race"],
+  strength: ["strength_push", "strength_pull", "strength_legs", "strength_core"],
+  other: ["other", "endurance", "recovery"],
+};
+
+export const SKIP_REASONS = {
+  choice: "Choix",
+  life: "Vie",
+  injury: "Blessure",
+} as const;
+
 export type Discipline = keyof typeof DISCIPLINES;
 export type SessionType = keyof typeof SESSION_TYPES;
 export type Priority = keyof typeof PRIORITIES;

@@ -1,33 +1,24 @@
-import { DISCIPLINES, PHASE_TYPES, PRIORITIES, SESSION_TYPES } from "@/domain/labels";
+import { PHASE_TYPES } from "@/domain/labels";
 import { requireUser } from "@/lib/supabase/server";
-import { today } from "@/lib/time";
-import { createPhase, createPlannedSession, createSeason, signOut } from "./actions";
+import { createPhase, createSeason, signOut } from "./actions";
 
 /**
- * Jalon 1 : écran technique minimal pour vérifier le schéma de bout en bout
- * (saison → phase → séance). Remplacé au jalon 2 par les vues Aujourd'hui et Semaine.
+ * Saisons et phases : saisie minimale en attendant la vue Saison
+ * (frise des phases, courses, courbe de volume).
  */
-export default async function Home({ searchParams }: PageProps<"/">) {
+export default async function SeasonsPage({ searchParams }: PageProps<"/saisons">) {
   const { error } = await searchParams;
   const { supabase } = await requireUser();
-  const day = today();
 
-  const [seasons, phases, sessions] = await Promise.all([
+  const [seasons, phases] = await Promise.all([
     supabase.from("seasons").select("id, name, start_date, end_date, goal").is("deleted_at", null).order("start_date"),
-    supabase.from("phases").select("id, name, type, start_date, end_date, season_id").is("deleted_at", null).order("start_date"),
-    supabase
-      .from("planned_sessions")
-      .select("id, date, discipline, session_type, priority, status, target_duration_s, title")
-      .is("deleted_at", null)
-      .gte("date", day)
-      .order("date")
-      .limit(30),
+    supabase.from("phases").select("id, name, type, start_date, end_date").is("deleted_at", null).order("start_date"),
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-6">
+    <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">ObjectifIM</h1>
+        <h1 className="text-xl font-semibold">Saisons</h1>
         <form action={signOut}>
           <button className="text-sm underline">Se déconnecter</button>
         </form>
@@ -61,7 +52,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 {seasons.data.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
               </select>
             </Field>
-            <Field label="Type"><Select name="type" options={PHASE_TYPES} /></Field>
+            <Field label="Type">
+              <select name="type" required className={inputClass}>
+                {Object.entries(PHASE_TYPES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </Field>
             <Field label="Nom"><input name="name" required className={inputClass} /></Field>
             <Field label="Début"><input name="start_date" type="date" required className={inputClass} /></Field>
             <Field label="Fin"><input name="end_date" type="date" required className={inputClass} /></Field>
@@ -71,31 +66,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <p className="text-sm text-neutral-500">Crée d&apos;abord une saison.</p>
         )}
       </Section>
-
-      <Section title="Séances à venir">
-        <List
-          items={sessions.data ?? []}
-          render={(s) =>
-            `${s.date} · ${DISCIPLINES[s.discipline as keyof typeof DISCIPLINES]} · ${
-              SESSION_TYPES[s.session_type as keyof typeof SESSION_TYPES]
-            } · ${PRIORITIES[s.priority as keyof typeof PRIORITIES]} · ${Math.round((s.target_duration_s ?? 0) / 60)} min${
-              s.title ? ` · ${s.title}` : ""
-            }`
-          }
-        />
-        <form action={createPlannedSession} className={formClass}>
-          <Field label="Date"><input name="date" type="date" required defaultValue={day} className={inputClass} /></Field>
-          <Field label="Discipline"><Select name="discipline" options={DISCIPLINES} /></Field>
-          <Field label="Type"><Select name="session_type" options={SESSION_TYPES} /></Field>
-          <Field label="Priorité"><Select name="priority" options={PRIORITIES} defaultValue="secondary" /></Field>
-          <Field label="Durée (min)">
-            <input name="duration_min" type="number" inputMode="numeric" min={1} required className={inputClass} />
-          </Field>
-          <Field label="Titre"><input name="title" className={inputClass} /></Field>
-          <Submit>Créer la séance</Submit>
-        </form>
-      </Section>
-    </main>
+    </div>
   );
 }
 
@@ -118,14 +89,6 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       {label}
       {children}
     </label>
-  );
-}
-
-function Select({ name, options, defaultValue }: { name: string; options: Record<string, string>; defaultValue?: string }) {
-  return (
-    <select name={name} required defaultValue={defaultValue} className={inputClass}>
-      {Object.entries(options).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-    </select>
   );
 }
 

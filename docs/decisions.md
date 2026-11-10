@@ -17,6 +17,9 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D9 | Charge | Charge principale = RPE × durée (Foster). Relative Effort Strava en secondaire. |
 | D10 | Strava | Routes Next sur Vercel pour OAuth et webhook. Flux compressés dans Supabase Storage. Jetons dans le schéma `private`. |
 | D11 | Outillage | npm, Vitest, Open-Meteo, Vercel Cron. Connexion par lien magique, inscriptions désactivées. Pas de Docker : migrations poussées sur le projet Supabase distant avec `supabase db push`. |
+| D13 | Lecture côté client | Les écrans lisent la copie locale Dexie via `useLiveQuery`, réactive aux écritures locales comme aux synchros. TanStack Query n'est pas utilisé : il ferait doublon avec Dexie. Il reste disponible pour les appels purement réseau (Strava, météo). |
+| D14 | Next 16 | `cacheComponents` désactivé : données pilotées côté client, et chaque lecture de session imposerait une frontière `<Suspense>`. |
+| D15 | Écritures | Toute écriture de l'interface passe par `SyncEngine.mutate` (local d'abord, file d'attente, RPC `apply_mutations`). Seuls les écrans Saisons, non encore réécrits, passent par des Server Actions. |
 | D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10 : les activités « Workout » n'ont aucun exercice). Saisie manuelle en priorité, pré-remplie. |
 
 ## Jugement de l'intensité (arbitrage 7)

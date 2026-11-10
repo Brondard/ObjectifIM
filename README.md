@@ -24,6 +24,7 @@ npm run dev
 | `npm run db:push` | Applique les migrations de `supabase/migrations` au projet distant |
 | `npm run gen:types` | Régénère `src/lib/supabase/database.types.ts` depuis la base |
 | `npm run gen:schemas` | Régénère `schemas/*.json` depuis Zod (un test échoue s'ils divergent) |
+| `npx supabase db query --remote --yes -f supabase/tests/apply_mutations.sql` | Teste la RPC de synchro sur la base (tout est annulé ; attendu : « TESTS OK ») |
 
 Le schéma ne se modifie **que** par une nouvelle migration versionnée, jamais dans l'interface Supabase.
 
@@ -33,6 +34,7 @@ Le schéma ne se modifie **que** par une nouvelle migration versionnée, jamais 
 src/domain/      logique métier pure et testée (aucun accès base ni réseau)
 src/lib/time/    module unique de dates (fuseau Europe/Paris, changements d'heure)
 src/lib/supabase clients Supabase et types générés
+src/lib/sync/    copie locale (Dexie), file d'écritures, synchronisation
 supabase/        configuration et migrations
 ```
 
@@ -41,7 +43,7 @@ supabase/        configuration et migrations
 | Jalon | Contenu | État |
 |---|---|---|
 | 1 | Schéma, migrations, RLS, types, auth | livré |
-| 2 | Vues Aujourd'hui et Semaine, CRUD, validation en un geste | |
+| 2 | Vues Aujourd'hui et Semaine, CRUD, validation en un geste | livré |
 | 3 | Repères, zones, cibles | |
 | 4 | Strava | |
 | 5 | Moteur de replanification | |

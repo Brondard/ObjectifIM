@@ -101,3 +101,14 @@ export function weekDays(date: LocalDate): LocalDate[] {
 export function compareLocalDates(a: LocalDate, b: LocalDate): number {
   return a < b ? -1 : a > b ? 1 : 0;
 }
+
+/** Libellé français d'un jour calendaire (« mardi 10 novembre »), sans effet de fuseau. */
+export function formatLocalDate(date: LocalDate, options: Intl.DateTimeFormatOptions = { weekday: "long", day: "numeric", month: "long" }): string {
+  const [y, m, d] = parts(date);
+  return new Intl.DateTimeFormat("fr-FR", { ...options, timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/** Instant présent au format ISO (horodatages techniques : suppression logique, etc.). */
+export function nowIso(): string {
+  return now().toISOString();
+}

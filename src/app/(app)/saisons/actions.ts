@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { DISCIPLINES, PHASE_TYPES, PRIORITIES, SESSION_TYPES, keysOf } from "@/domain/labels";
+import { PHASE_TYPES, keysOf } from "@/domain/labels";
 import { isLocalDate } from "@/lib/time";
 import { createClient, requireUser } from "@/lib/supabase/server";
 
@@ -11,7 +11,7 @@ const date = z.string().refine(isLocalDate, "Date invalide");
 const optionalText = z.string().trim().transform((v) => v || null);
 
 function fail(message: string): never {
-  redirect(`/?error=${encodeURIComponent(message)}`);
+  redirect(`/saisons?error=${encodeURIComponent(message)}`);
 }
 
 function parse<T extends z.ZodType>(schema: T, formData: FormData): z.infer<T> {
@@ -29,7 +29,7 @@ export async function createSeason(formData: FormData) {
   const { supabase } = await requireUser();
   const { error } = await supabase.from("seasons").insert(input);
   if (error) fail(error.message);
-  revalidatePath("/");
+  revalidatePath("/saisons");
 }
 
 const PhaseInput = z
@@ -47,26 +47,7 @@ export async function createPhase(formData: FormData) {
   const { supabase } = await requireUser();
   const { error } = await supabase.from("phases").insert(input);
   if (error) fail(error.code === "23P01" ? "Cette phase chevauche une phase existante" : error.message);
-  revalidatePath("/");
-}
-
-const SessionInput = z.object({
-  date,
-  discipline: z.enum(keysOf(DISCIPLINES)),
-  session_type: z.enum(keysOf(SESSION_TYPES)),
-  priority: z.enum(keysOf(PRIORITIES)),
-  duration_min: z.coerce.number().int().positive().max(24 * 60),
-  title: optionalText,
-});
-
-export async function createPlannedSession(formData: FormData) {
-  const { duration_min, ...input } = parse(SessionInput, formData);
-  const { supabase } = await requireUser();
-  const { error } = await supabase
-    .from("planned_sessions")
-    .insert({ ...input, target_duration_s: duration_min * 60 });
-  if (error) fail(error.message);
-  revalidatePath("/");
+  revalidatePath("/saisons");
 }
 
 export async function signOut() {

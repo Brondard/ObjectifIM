@@ -1806,7 +1806,7 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      apply_mutations: { Args: { mutations: Json }; Returns: Json }
     }
     Enums: {
       [_ in never]: never
