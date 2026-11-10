@@ -15,6 +15,8 @@ export type MetricRow = Tables<"metrics">;
 export type ZoneModelRow = Tables<"zone_models">;
 export type EngineRule = Tables<"engine_rules">;
 export type SubstitutionRow = Tables<"substitutions">;
+export type Niggle = Tables<"niggles">;
+export type NiggleEntry = Tables<"niggle_entries">;
 
 export type ConflictRecord = {
   key: string; // `${table}:${id}:${field}`
@@ -49,6 +51,8 @@ export class LocalDb extends Dexie {
   zone_models!: Table<ZoneModelRow, string>;
   engine_rules!: Table<EngineRule, string>;
   substitutions!: Table<SubstitutionRow, string>;
+  niggles!: Table<Niggle, string>;
+  niggle_entries!: Table<NiggleEntry, string>;
   outbox!: Table<OutboxEntry, number>;
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
@@ -82,6 +86,8 @@ export class LocalDb extends Dexie {
     this.version(3).stores({ streams: "id" });
     // Jalon 5 : table de substitutions du mode déplacement.
     this.version(4).stores({ substitutions: "id" });
+    // Jalon 6 : gênes.
+    this.version(5).stores({ niggles: "id, body_zone", niggle_entries: "id, niggle_id" });
   }
 
   rows(table: PullTable): Table<Record<string, unknown> & { id: string }, string> {

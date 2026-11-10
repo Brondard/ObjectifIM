@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { analyzeIntensity, ANALYSIS_VERSION, EASY_TYPES, type IntensityAnalysis } from "@/domain/intensity";
-import { parseIntensity } from "@/domain/session-structure";
+import { SESSION_ANALYSIS_VERSION, type SessionAnalysis } from "@/domain/analysis/rigor";
+import { analyzeSession } from "@/domain/analysis/session";
+import type { IntensityAnalysis } from "@/domain/intensity";
 import type { Streams } from "@/domain/strava";
-import { resolveTargets, type TargetContext } from "@/domain/targets";
+import type { TargetContext } from "@/domain/targets";
 import type { CompletedSession, PlannedSession } from "./db";
 import type { SyncEngine } from "./engine";
 import { useSync } from "./provider";
@@ -26,6 +27,7 @@ export async function loadStreams(engine: SyncEngine, c: CompletedSession): Prom
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ completed_id: c.id }),
     });
+    if (res.status === 502) throw new Error((await res.json().catch(() => ({}))).error ?? "Strava indisponible");
     if (!res.ok) return null;
     path = (await res.json()).path;
     if (!path) return null;
@@ -38,54 +40,74 @@ export async function loadStreams(engine: SyncEngine, c: CompletedSession): Prom
   return data;
 }
 
-type Inputs = { judged: string; reason?: string };
+/** Analyse en cache sur la séance (version courante uniquement). */
+export const storedSessionAnalysis = (c: CompletedSession | null): SessionAnalysis | null => {
+  const a = c?.analysis as SessionAnalysis | null | undefined;
+  return a?.version === SESSION_ANALYSIS_VERSION ? a : null;
+};
 
-/**
- * Cible absolue sur laquelle juger la séance, selon l'arbitrage 7. Si la FC est déclarée aberrante,
- * l'allure reprend la main quand elle a une cible ; sinon seul le RPE reste.
- */
-export function analysisTarget(planned: PlannedSession, completion: CompletedSession, ctx: TargetContext) {
-  const targets = resolveTargets(planned, ctx, parseIntensity).filter((t) => t.status === "ok");
-  const usable = completion.hr_reliable === false ? targets.filter((t) => t.basis !== "hr") : targets;
-  const t = usable[0];
-  return t && t.status === "ok" ? { basis: t.basis, min: t.min, max: t.max } : null;
+export const storedAnalysis = (c: CompletedSession | null): IntensityAnalysis | null => storedSessionAnalysis(c)?.intensity ?? null;
+
+/** Calcule l'analyse d'une séance à partir de ses flux et la garde sur la séance (synchronisée). */
+export async function analyzeAndStore(
+  engine: SyncEngine,
+  c: CompletedSession,
+  planned: PlannedSession | null,
+  ctx: TargetContext,
+): Promise<{ analysis: SessionAnalysis | null; reason?: string }> {
+  const streams = await loadStreams(engine, c);
+  if (!streams) return { analysis: null, reason: c.strava_activity_id ? "flux indisponibles (hors ligne ?)" : "séance saisie à la main, sans flux" };
+  const analysis = analyzeSession(c, planned, streams, ctx);
+  if (JSON.stringify(analysis) !== JSON.stringify(c.analysis)) {
+    await engine.mutate("completed_sessions", c.id, { analysis });
+  }
+  return { analysis };
 }
 
-/**
- * Analyse d'intensité d'une séance réalisée rattachée : calculée sur les flux, puis mise en cache
- * dans completed_sessions.analysis (synchronisée) pour les vues qui n'ont pas les flux.
- */
-export function useIntensityAnalysis(planned: PlannedSession | null | undefined, completion: CompletedSession | null) {
+/** Analyse d'une séance affichée : recalculée si la cible, les repères ou la fiabilité de la FC changent. */
+export function useSessionAnalysis(planned: PlannedSession | null | undefined, completion: CompletedSession | null) {
   const engine = useSync();
   const ctx = useTargetContext();
-  const [state, setState] = useState<{ analysis: IntensityAnalysis | null; info: Inputs } | null>(null);
+  const [state, setState] = useState<{ analysis: SessionAnalysis | null; reason?: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    async function run() {
-      if (!planned || !completion || !ctx) return;
-      const target = analysisTarget(planned, completion, ctx);
-      if (!target) return setState({ analysis: null, info: { judged: "", reason: "aucune cible exploitable" } });
-      const streams = await loadStreams(engine, completion);
-      if (cancelled) return;
-      if (!streams) return setState({ analysis: null, info: { judged: target.basis, reason: "flux indisponibles" } });
-      const analysis = analyzeIntensity(streams, target, EASY_TYPES.has(planned.session_type), ctx.rules.intensity);
-      setState({ analysis, info: { judged: target.basis } });
-      if (analysis && JSON.stringify(analysis) !== JSON.stringify(completion.analysis)) {
-        await engine.mutate("completed_sessions", completion.id, { analysis });
-      }
-    }
-    void run();
+    if (!completion || !ctx || planned === undefined) return;
+    analyzeAndStore(engine, completion, planned, ctx)
+      .then((r) => !cancelled && setState(r))
+      .catch((e) => !cancelled && setState({ analysis: null, reason: e instanceof Error ? e.message : String(e) }));
     return () => {
       cancelled = true;
     };
-    // Recalcul si la cible, les repères ou le statut de la FC changent.
   }, [engine, planned, completion?.id, completion?.hr_reliable, ctx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return state;
 }
 
-export const storedAnalysis = (c: CompletedSession | null): IntensityAnalysis | null => {
-  const a = c?.analysis as IntensityAnalysis | null | undefined;
-  return a?.version === ANALYSIS_VERSION ? a : null;
-};
+/** Limite par lot : Strava autorise 100 lectures par quart d'heure, on en garde pour le webhook. */
+export const BATCH_LIMIT = 60;
+
+/**
+ * Prépare en lot les analyses manquantes (séances avec activité Strava, sans analyse à jour).
+ * Séquentiel, s'arrête à la première erreur Strava (limite atteinte) ; relançable sans perte.
+ */
+export async function prepareAnalyses(
+  engine: SyncEngine,
+  items: { completion: CompletedSession; planned: PlannedSession | null }[],
+  ctx: TargetContext,
+  onProgress: (done: number, total: number) => void,
+): Promise<{ analysed: number; skipped: number; stoppedOn?: string }> {
+  const todo = items.filter((i) => i.completion.strava_activity_id && !storedSessionAnalysis(i.completion)).slice(0, BATCH_LIMIT);
+  let analysed = 0;
+  for (const [k, item] of todo.entries()) {
+    onProgress(k, todo.length);
+    try {
+      const r = await analyzeAndStore(engine, item.completion, item.planned, ctx);
+      if (r.analysis) analysed++;
+    } catch (e) {
+      return { analysed, skipped: todo.length - k, stoppedOn: e instanceof Error ? e.message : String(e) };
+    }
+  }
+  onProgress(todo.length, todo.length);
+  return { analysed, skipped: 0 };
+}

@@ -7,7 +7,8 @@ import { formatClock, formatDelta, formatDistance, formatDuration, formatRange }
 import type { CompletedSession, PlannedSession } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { manualCompletionOf, useCompletionsOf } from "@/lib/sync/queries";
-import { storedAnalysis, useIntensityAnalysis } from "@/lib/sync/streams";
+import { storedSessionAnalysis, useSessionAnalysis } from "@/lib/sync/streams";
+import { StreamFindings } from "./stream-findings";
 import { nowIso } from "@/lib/time";
 
 const label = <T extends Record<string, string>>(map: T, key: string) => map[key as keyof T] ?? key;
@@ -111,8 +112,9 @@ export function IntensityVerdict({ analysis, compact = false }: { analysis: Inte
 /** Détail d'un réalisé importé sur la fiche séance : volume, intensité, fiabilité de la FC. */
 export function RealizedAnalysis({ planned, completion }: { planned: PlannedSession; completion: CompletedSession }) {
   const engine = useSync();
-  const live = useIntensityAnalysis(planned, completion);
-  const analysis = live?.analysis ?? storedAnalysis(completion);
+  const live = useSessionAnalysis(planned, completion);
+  const full = live?.analysis ?? storedSessionAnalysis(completion);
+  const analysis = full?.intensity ?? null;
   const vol = volumeDelta(planned.target_duration_s, completion.moving_s ?? completion.elapsed_s);
 
   return (
@@ -130,9 +132,12 @@ export function RealizedAnalysis({ planned, completion }: { planned: PlannedSess
       )}
       {analysis ? (
         <IntensityVerdict analysis={analysis} />
-      ) : live?.info.reason ? (
-        <p className="text-xs text-neutral-500">Intensité non analysée : {live.info.reason}.</p>
+      ) : live?.reason ? (
+        <p className="text-xs text-neutral-500">Intensité non analysée : {live.reason}.</p>
+      ) : full ? (
+        <p className="text-xs text-neutral-500">Intensité non jugée : aucune cible exploitable (zones ou repères manquants).</p>
       ) : null}
+      {full && <StreamFindings analysis={full} discipline={completion.discipline} />}
       {completion.strava_activity_id && completion.avg_hr != null && (
         <label className="flex items-center gap-2 text-xs text-neutral-600 dark:text-neutral-400">
           <input

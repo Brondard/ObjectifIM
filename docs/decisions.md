@@ -30,6 +30,9 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D23 | Maladie, blessure | Aucune compression ni rattrapage, pas même la sortie longue : la santé prime sur la règle 1. Deux options : reprise douce (première séance dure raccourcie de 30 %) ou reprise du plan. |
 | D24 | Règle des +10 % | Une replanification dans la semaine n’ajoute jamais de volume : la règle ne peut donc pas éliminer d’option, elle s’affiche en alerte quand le plan dépasse déjà la référence. |
 | D25 | Séance supprimée | Une séance retirée par le moteur passe en statut manqué (vie, blessure ou choix) avec une note, jamais supprimée : l’assiduité reste mesurable. Chaque choix est journalisé avec l’instantané de toutes les options proposées. |
+| D26 | « Est-ce que je cours trop vite ? » | Deux mesures, jamais mélangées : la part des footings prévus faciles jugés trop intenses (règle FC), et la part du temps de course au-dessus de Z2 (zones de FC, séances prévues ou non). Sur 4 semaines. |
+| D27 | Analyse par séance | Version 2 dans `completed_sessions.analysis` : verdict d’intensité, temps par zone, dérive cardiaque et décrochage de cadence (séances régulières d’une heure ou plus), blocs d’allure (structure entièrement chiffrée seulement, alignement approximatif). Calcul côté client, par lot de 60 au plus pour ménager la limite Strava. |
+| D28 | Charge | RPE × minutes ; sans RPE saisi, RPE estimé selon le type prévu, sinon 4, et la part estimée est affichée. Ratio 7 j / 28 j quotidien, monotonie et contrainte de Foster par semaine. |
 | D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10 : les activités « Workout » n'ont aucun exercice). Saisie manuelle en priorité, pré-remplie. |
 
 ## Jugement de l'intensité (arbitrage 7)

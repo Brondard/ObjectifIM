@@ -24,3 +24,34 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
 }
+
+/* Graphiques : couleurs par rôle (palette validée, clair et sombre choisis séparément). */
+:root {
+  --viz-done: #2a78d6;
+  --viz-planned: #eb6834;
+  --viz-grid: #e4e3df;
+  --viz-axis: #52514e;
+  --viz-band: #eeedea;
+  --viz-alert: #c62828;
+  /* Rampe séquentielle d'un seul bleu : Z1 (facile) → Z5 (intense). */
+  --viz-z1: #cfe0f6;
+  --viz-z2: #9cc0ee;
+  --viz-z3: #5f9ae3;
+  --viz-z4: #2a78d6;
+  --viz-z5: #174a86;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --viz-done: #3987e5;
+    --viz-planned: #d95926;
+    --viz-grid: #2d2d2b;
+    --viz-axis: #c3c2b7;
+    --viz-band: #262624;
+    --viz-alert: #ef6b6b;
+    --viz-z1: #1d3756;
+    --viz-z2: #24528a;
+    --viz-z3: #3987e5;
+    --viz-z4: #7ab0f0;
+    --viz-z5: #c4dcf8;
+  }
+}

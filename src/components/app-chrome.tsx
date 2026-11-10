@@ -10,6 +10,7 @@ const NAV = [
   { href: "/", label: "Aujourd'hui" },
   { href: "/semaine", label: "Semaine" },
   { href: "/seance/nouvelle", label: "Ajouter" },
+  { href: "/analyse", label: "Analyse" },
   { href: "/reglages", label: "Réglages" },
 ];
 
@@ -21,14 +22,14 @@ export function AppChrome({ children }: { children: ReactNode }) {
       <ConflictPanel />
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 pb-24 pt-4">{children}</main>
       <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-neutral-200 bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur dark:border-neutral-800">
-        <ul className="mx-auto grid max-w-3xl grid-cols-4">
+        <ul className="mx-auto grid max-w-3xl grid-cols-5">
           {NAV.map((item) => {
             const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
             return (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex h-14 items-center justify-center text-sm ${active ? "font-semibold" : "text-neutral-500"}`}
+                  className={`flex h-14 items-center justify-center text-xs sm:text-sm ${active ? "font-semibold" : "text-neutral-500"}`}
                 >
                   {item.label}
                 </Link>
