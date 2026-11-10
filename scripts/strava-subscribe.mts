@@ -25,5 +25,3 @@ const json = await res.json();
 if (!res.ok) throw new Error(`Strava ${res.status} : ${JSON.stringify(json)}`);
 console.log("Abonnement créé :", json);
 console.log("Ajoute STRAVA_SUBSCRIPTION_ID =", json.id, "aux variables Vercel.");
-
-export {};
