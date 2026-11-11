@@ -1040,9 +1040,11 @@ export type Database = {
           deleted_at: string | null
           hr_caps: Json
           id: string
+          leg: string
           morning_timeline: Json
           name: string
           nutrition: Json
+          params: Json
           protocol_id: string | null
           race_id: string
           splits: Json
@@ -1056,9 +1058,11 @@ export type Database = {
           deleted_at?: string | null
           hr_caps?: Json
           id?: string
+          leg?: string
           morning_timeline?: Json
           name: string
           nutrition?: Json
+          params?: Json
           protocol_id?: string | null
           race_id: string
           splits?: Json
@@ -1072,9 +1076,11 @@ export type Database = {
           deleted_at?: string | null
           hr_caps?: Json
           id?: string
+          leg?: string
           morning_timeline?: Json
           name?: string
           nutrition?: Json
+          params?: Json
           protocol_id?: string | null
           race_id?: string
           splits?: Json
@@ -1102,6 +1108,7 @@ export type Database = {
       races: {
         Row: {
           _rev: number
+          course: Json | null
           created_at: string
           date: string
           debrief: Json | null
@@ -1126,6 +1133,7 @@ export type Database = {
         }
         Insert: {
           _rev?: number
+          course?: Json | null
           created_at?: string
           date: string
           debrief?: Json | null
@@ -1150,6 +1158,7 @@ export type Database = {
         }
         Update: {
           _rev?: number
+          course?: Json | null
           created_at?: string
           date?: string
           debrief?: Json | null

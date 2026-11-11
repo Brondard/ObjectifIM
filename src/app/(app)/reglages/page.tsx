@@ -26,7 +26,11 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Réglages</h1>
-        <Link href="/saisons" className="text-sm underline">Saisons et phases</Link>
+        <nav className="flex gap-3 text-sm underline">
+          <Link href="/courses">Courses</Link>
+          <Link href="/nutrition">Nutrition</Link>
+          <Link href="/saisons">Saisons</Link>
+        </nav>
       </header>
       <RetestList />
       <StravaSettings />

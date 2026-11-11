@@ -68,3 +68,24 @@ export function formatMetric(kind: string, value: number): string {
       return `${value} bpm`;
   }
 }
+
+/** 12345 → « 3:25:45 » (heures, minutes, secondes). */
+export function formatHms(seconds: number | null | undefined): string {
+  if (seconds == null) return "—";
+  const s = Math.round(seconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return `${h}:${String(m).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** « 3:25:45 », « 3h25 », « 45:30 » → secondes ; null si illisible. */
+export function parseHms(text: string): number | null {
+  const t = text.trim().toLowerCase().replace(/\s/g, "");
+  const hm = /^(\d+)h(\d{1,2})?$/.exec(t);
+  if (hm) return Number(hm[1]) * 3600 + Number(hm[2] ?? 0) * 60;
+  const parts = t.split(":").map(Number);
+  if (!parts.length || parts.some((n) => !Number.isFinite(n))) return null;
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  return null;
+}

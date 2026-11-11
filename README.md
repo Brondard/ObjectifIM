@@ -49,6 +49,6 @@ supabase/        configuration et migrations
 | 4 | Strava | livré (à brancher : app Strava + variables) |
 | 5 | Moteur de replanification | livré |
 | 6 | Analyse | livré |
-| 7 | Courses | |
+| 7 | Courses | livré |
 | 8 | PWA, hors ligne, notifications, ICS | |
 | 9 | Fonctionnalités reportées | |

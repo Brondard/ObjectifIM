@@ -17,6 +17,12 @@ export type EngineRule = Tables<"engine_rules">;
 export type SubstitutionRow = Tables<"substitutions">;
 export type Niggle = Tables<"niggles">;
 export type NiggleEntry = Tables<"niggle_entries">;
+export type RacePlan = Tables<"race_plans">;
+export type Checklist = Tables<"checklists">;
+export type ChecklistItem = Tables<"checklist_items">;
+export type NutritionProduct = Tables<"nutrition_products">;
+export type NutritionProtocol = Tables<"nutrition_protocols">;
+export type ToleranceLog = Tables<"tolerance_logs">;
 
 export type ConflictRecord = {
   key: string; // `${table}:${id}:${field}`
@@ -53,6 +59,12 @@ export class LocalDb extends Dexie {
   substitutions!: Table<SubstitutionRow, string>;
   niggles!: Table<Niggle, string>;
   niggle_entries!: Table<NiggleEntry, string>;
+  race_plans!: Table<RacePlan, string>;
+  checklists!: Table<Checklist, string>;
+  checklist_items!: Table<ChecklistItem, string>;
+  nutrition_products!: Table<NutritionProduct, string>;
+  nutrition_protocols!: Table<NutritionProtocol, string>;
+  tolerance_logs!: Table<ToleranceLog, string>;
   outbox!: Table<OutboxEntry, number>;
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
@@ -88,6 +100,15 @@ export class LocalDb extends Dexie {
     this.version(4).stores({ substitutions: "id" });
     // Jalon 6 : gênes.
     this.version(5).stores({ niggles: "id, body_zone", niggle_entries: "id, niggle_id" });
+    // Jalon 7 : courses et nutrition (lisibles hors ligne : mode course au bord de la ligne de départ).
+    this.version(6).stores({
+      race_plans: "id, race_id",
+      checklists: "id, race_id",
+      checklist_items: "id, checklist_id",
+      nutrition_products: "id",
+      nutrition_protocols: "id",
+      tolerance_logs: "id, product_id",
+    });
   }
 
   rows(table: PullTable): Table<Record<string, unknown> & { id: string }, string> {

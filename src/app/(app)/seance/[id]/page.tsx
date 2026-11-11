@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { v7 as uuidv7 } from "uuid";
 import { MatchPrompt, RealizedAnalysis } from "@/components/realized";
+import { SessionFuel } from "@/components/race/reminders";
 import { Feedback } from "@/components/session-card";
 import { TargetLines, resolveStep, targetLabel } from "@/components/targets";
 import { SessionForm, valuesOf, type SessionFormValues } from "@/components/session-form";
@@ -72,6 +73,8 @@ export default function SessionPage() {
         <h2 className="font-medium">Cible</h2>
         <TargetLines session={session} />
       </section>
+
+      <SessionFuel session={session} />
 
       {structure?.success && (
         <section className="flex flex-col gap-1 text-sm">

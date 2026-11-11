@@ -104,6 +104,28 @@ export const ZONE_SETUPS: { discipline: "run" | "bike" | "swim"; basis: keyof ty
   { discipline: "swim", basis: "swim_pace", methods: ["pct_css"] },
 ];
 
+export const SPORTS = { run: "Course à pied", tri: "Triathlon", bike: "Vélo", swim: "Natation", other: "Autre" } as const;
+export const FORMATS = {
+  "5k": "5 km", "10k": "10 km", half: "Semi-marathon", marathon: "Marathon", trail: "Trail",
+  sprint: "Triathlon S", olympic: "Triathlon M (olympique)", l: "Triathlon L", "70.3": "70.3", "140.6": "Ironman (140.6)", other: "Autre",
+} as const;
+/** Distance par défaut d'un format (course à pied ou total triathlon), en mètres. */
+export const FORMAT_DISTANCE: Partial<Record<keyof typeof FORMATS, number>> = {
+  "5k": 5000, "10k": 10000, half: 21097, marathon: 42195,
+};
+
+/** Distances par portion d'un triathlon (m), modifiables dans le plan : le format L varie selon les courses. */
+export const TRI_LEGS: Partial<Record<keyof typeof FORMATS, { swim: number; bike: number; run: number }>> = {
+  sprint: { swim: 750, bike: 20000, run: 5000 },
+  olympic: { swim: 1500, bike: 40000, run: 10000 },
+  l: { swim: 3000, bike: 80000, run: 30000 },
+  "70.3": { swim: 1900, bike: 90000, run: 21097 },
+  "140.6": { swim: 3800, bike: 180000, run: 42195 },
+};
+
+/** Part indicative de chaque portion dans le temps total d'un triathlon long (transitions comprises). */
+export const TRI_TIME_SHARE = { swim: 0.12, bike: 0.52, run: 0.34, transitions: 0.02 };
+
 export type Discipline = keyof typeof DISCIPLINES;
 export type SessionType = keyof typeof SESSION_TYPES;
 export type Priority = keyof typeof PRIORITIES;

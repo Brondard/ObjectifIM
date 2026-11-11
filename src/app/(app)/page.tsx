@@ -8,6 +8,7 @@ import { Feedback, SessionCard } from "@/components/session-card";
 import { planFeedback } from "@/domain/marking";
 import { useSync } from "@/lib/sync/provider";
 import { RetestList } from "@/components/targets";
+import { RaceReminders } from "@/components/race/reminders";
 import { DISCIPLINES } from "@/domain/labels";
 import { formatDuration } from "@/lib/format";
 import { useCompletedBetween, usePlannedBetween } from "@/lib/sync/queries";
@@ -25,6 +26,8 @@ export default function TodayPage() {
 
   return (
     <div className="flex flex-col gap-6">
+      <RaceReminders />
+
       <header>
         <p className="text-sm text-neutral-500">Aujourd&apos;hui</p>
         <h1 className="text-2xl font-semibold first-letter:uppercase">{formatLocalDate(day)}</h1>

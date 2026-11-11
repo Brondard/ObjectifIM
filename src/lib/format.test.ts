@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatClock, formatDuration, formatRange, parseClock } from "./format";
+import { formatClock, formatDuration, formatHms, formatRange, parseClock, parseHms } from "./format";
 
 describe("formatage", () => {
   it("lit et écrit les allures en min:s", () => {
@@ -19,5 +19,15 @@ describe("formatage", () => {
     expect(formatRange("swim_pace", 124, null)).toBe("plus vite que 2:04 /100 m");
     expect(formatDuration(5400)).toBe("1 h 30");
     expect(formatDuration(2700)).toBe("45 min");
+  });
+});
+
+describe("durées de course", () => {
+  it("lit et écrit h:mm:ss", () => {
+    expect(formatHms(12345)).toBe("3:25:45");
+    expect(parseHms("3:25:45")).toBe(12345);
+    expect(parseHms("3h25")).toBe(12300);
+    expect(parseHms("45:30")).toBe(2730);
+    expect(parseHms("abc")).toBeNull();
   });
 });

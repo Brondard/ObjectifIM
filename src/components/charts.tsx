@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ReferenceArea, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import type { ReactNode } from "react";
 
@@ -125,6 +125,23 @@ export function AcwrChart({ data, low, high }: { data: { label: string; acwr: nu
           }
         />
       </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** Profil altimétrique d'un parcours (une seule série : pas de légende, le titre la nomme). */
+export function ProfileChart({ samples }: { samples: { d: number; ele: number }[] }) {
+  const data = samples.map((s) => ({ km: Math.round(s.d / 100) / 10, ele: s.ele }));
+  const min = Math.min(...data.map((d) => d.ele));
+  return (
+    <ResponsiveContainer>
+      <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <CartesianGrid vertical={false} stroke="var(--viz-grid)" />
+        <XAxis dataKey="km" type="number" domain={["dataMin", "dataMax"]} {...axis} tickFormatter={(v) => `${number(v)} km`} />
+        <YAxis {...axis} width={48} domain={[Math.floor(min / 10) * 10, "auto"]} tickFormatter={(v) => `${number(v)} m`} />
+        <Tooltip {...tooltipStyle} labelFormatter={(v) => `km ${number(Number(v))}`} formatter={(v) => [`${number(Number(v))} m`, "Altitude"]} />
+        <Area dataKey="ele" type="monotone" stroke="var(--viz-done)" strokeWidth={2} fill="var(--viz-done)" fillOpacity={0.15} isAnimationActive={false} />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }

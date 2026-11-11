@@ -33,6 +33,9 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D26 | « Est-ce que je cours trop vite ? » | Deux mesures, jamais mélangées : la part des footings prévus faciles jugés trop intenses (règle FC), et la part du temps de course au-dessus de Z2 (zones de FC, séances prévues ou non). Sur 4 semaines. |
 | D27 | Analyse par séance | Version 2 dans `completed_sessions.analysis` : verdict d’intensité, temps par zone, dérive cardiaque et décrochage de cadence (séances régulières d’une heure ou plus), blocs d’allure (structure entièrement chiffrée seulement, alignement approximatif). Calcul côté client, par lot de 60 au plus pour ménager la limite Strava. |
 | D28 | Charge | RPE × minutes ; sans RPE saisi, RPE estimé selon le type prévu, sinon 4, et la part estimée est affichée. Ratio 7 j / 28 j quotidien, monotonie et contrainte de Foster par semaine. |
+| D29 | GPX | Lu dans le navigateur (aucun envoi nécessaire au calcul) ; fichier gardé dans Storage. Dénivelé par hystérésis de 5 m après lissage sur ~100 m, profil tous les 100 m (200 m à vélo), montées de 30 m et 400 m minimum. Un profil par portion dans `races.course`. |
+| D30 | Pacing | Course : coût de Minetti selon la pente à effort constant, facteur borné à [0,8 ; 3]. Vélo : puissance constante, modèle physique (masse, CdA, roulement, vitesse max 65 km/h) à recaler sur tes sorties. Plafonds de FC par paliers de la FC au seuil (90 % jusqu'à mi-course, 94 % jusqu'à 85 %, libre ensuite). |
+| D31 | Plans de course | Un plan par portion (`race_plans.leg`) à identifiant déterministe par course et portion, plus un plan « full » pour le déroulé du matin. Tout est synchronisé localement : le mode course fonctionne sans réseau. |
 | D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10 : les activités « Workout » n'ont aucun exercice). Saisie manuelle en priorité, pré-remplie. |
 
 ## Jugement de l'intensité (arbitrage 7)
