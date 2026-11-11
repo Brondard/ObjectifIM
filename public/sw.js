@@ -6,12 +6,14 @@
  *   - API et Supabase : jamais mis en cache ici.
  * Il reçoit aussi les notifications push.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const STATIC_CACHE = `objectifim-static-${VERSION}`;
 const PAGE_CACHE = `objectifim-pages-${VERSION}`;
 
 // Écrans indispensables hors ligne, mis en cache dès l'installation.
-const SHELL = ["/", "/semaine", "/seance/nouvelle", "/analyse", "/reglages", "/courses", "/nutrition", "/genes", "/replanifier"];
+const SHELL = [
+  "/", "/semaine", "/mois", "/saison", "/plan", "/seance/nouvelle", "/analyse", "/reglages", "/courses", "/nutrition", "/genes", "/replanifier",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(precache(SHELL).then(() => self.skipWaiting()));

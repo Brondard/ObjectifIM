@@ -1,0 +1,25 @@
+{
+  "$schema": "../plan-block.v1.json",
+  "format_version": "1",
+  "period": { "start": "2026-11-16", "end": "2026-11-22" },
+  "phase": {
+    "type": "base",
+    "name": "Base 2",
+    "objectives": "Volume aérobie, technique de nage, une seule séance de qualité en course."
+  },
+  "sessions": [
+    { "key": "s47-lun-nat", "date": "2026-11-16", "local_time": "07:30", "discipline": "swim", "session_type": "technique", "duration_min": 45, "instructions": "Éducatifs, respiration bilatérale." },
+    { "key": "s47-mar-cap", "date": "2026-11-17", "discipline": "run", "session_type": "endurance", "duration_min": 45, "target_intensity": { "basis": "hr", "zone": 2 } },
+    { "key": "s47-mer-club", "date": "2026-11-18", "local_time": "19:00", "discipline": "run", "session_type": "threshold", "priority": "key", "title": "Club",
+      "structure": { "version": 1, "steps": [
+        { "kind": "warmup", "duration_s": 1200 },
+        { "kind": "repeat", "times": 3, "steps": [
+          { "kind": "work", "duration_s": 600, "intensity": { "basis": "pace", "min": 285, "max": 295 } },
+          { "kind": "recovery", "duration_s": 120 }
+        ] },
+        { "kind": "cooldown", "duration_s": 600 }
+      ] } },
+    { "key": "s47-sam-sl", "date": "2026-11-21", "local_time": "09:00", "discipline": "run", "session_type": "long", "priority": "key", "title": "Sortie longue", "duration_min": 100 },
+    { "key": "s47-dim-velo", "date": "2026-11-22", "discipline": "bike", "session_type": "endurance", "duration_min": 150, "target_intensity": { "basis": "power", "zone": 2 } }
+  ]
+}

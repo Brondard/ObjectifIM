@@ -24,6 +24,9 @@ export type NutritionProduct = Tables<"nutrition_products">;
 export type NutritionProtocol = Tables<"nutrition_protocols">;
 export type ToleranceLog = Tables<"tolerance_logs">;
 export type PushSubscriptionRow = Tables<"push_subscriptions">;
+export type WeekTemplate = Tables<"week_templates">;
+export type WeekTemplateItem = Tables<"week_template_items">;
+export type ImportBatch = Tables<"import_batches">;
 
 export type ConflictRecord = {
   key: string; // `${table}:${id}:${field}`
@@ -67,6 +70,9 @@ export class LocalDb extends Dexie {
   nutrition_protocols!: Table<NutritionProtocol, string>;
   tolerance_logs!: Table<ToleranceLog, string>;
   push_subscriptions!: Table<PushSubscriptionRow, string>;
+  week_templates!: Table<WeekTemplate, string>;
+  week_template_items!: Table<WeekTemplateItem, string>;
+  import_batches!: Table<ImportBatch, string>;
   outbox!: Table<OutboxEntry, number>;
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
@@ -113,6 +119,8 @@ export class LocalDb extends Dexie {
     });
     // Jalon 8 : abonnements push de chaque appareil.
     this.version(7).stores({ push_subscriptions: "id, endpoint" });
+    // Jalon 9a : construction du plan (motifs de semaine, lots d'import).
+    this.version(8).stores({ week_templates: "id", week_template_items: "id, week_template_id", import_batches: "id" });
   }
 
   rows(table: PullTable): Table<Record<string, unknown> & { id: string }, string> {

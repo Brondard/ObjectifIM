@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLiveQuery } from "dexie-react-hooks";
 import { Suspense, useState } from "react";
+import { parseIntensity } from "@/domain/session-structure";
 import { v7 as uuidv7 } from "uuid";
 import { Feedback } from "@/components/session-card";
 import { DisciplinePicker, Field, SessionForm, inputClass } from "@/components/session-form";
@@ -26,6 +28,9 @@ function NewSession() {
   const date = requested && isLocalDate(requested) ? requested : now;
   const [alreadyDone, setAlreadyDone] = useState(params.get("faite") === "1");
   const back = (d: string) => router.push(d === now ? "/" : `/semaine?d=${d}`);
+  const templates = useLiveQuery(async () => (await engine.db.session_templates.toArray()).filter((t) => !t.deleted_at).sort((a, b) => a.name.localeCompare(b.name)), [engine.db]);
+  const [templateId, setTemplateId] = useState("");
+  const template = templates?.find((t) => t.id === templateId) ?? null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -48,28 +53,39 @@ function NewSession() {
           }}
         />
       ) : (
+        <>
+        {!!templates?.length && (
+          <select value={templateId} onChange={(e) => setTemplateId(e.target.value)} className="h-11 rounded-md border border-neutral-300 bg-transparent px-3 dark:border-neutral-700" aria-label="Partir d'une séance type">
+            <option value="">Partir d&apos;une séance type…</option>
+            {templates.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
+        )}
         <SessionForm
-          collapsed
+          key={templateId}
+          collapsed={!template}
           submitLabel="Créer la séance"
           initial={{
             date,
             local_time: null,
-            discipline: "run",
-            session_type: "endurance",
+            discipline: (template?.discipline ?? "run") as "run",
+            session_type: template?.session_type ?? "endurance",
             priority: "secondary",
             status: "planned",
-            title: null,
-            target_duration_s: null,
-            target_distance_m: null,
-            instructions: null,
+            title: template?.name ?? null,
+            target_duration_s: template?.default_duration_s ?? null,
+            target_distance_m: template?.default_distance_m ?? null,
+            instructions: template?.instructions ?? null,
             indoor: false,
-            target_intensity: null,
+            target_intensity: parseIntensity(template?.target_intensity),
           }}
           onSubmit={async (values) => {
-            await engine.mutate("planned_sessions", uuidv7(), { ...values, source: "manual" });
+            await engine.mutate("planned_sessions", uuidv7(), {
+              ...values, source: "manual", template_id: template?.id ?? null, structure: template?.structure ?? null,
+            });
             back(values.date);
           }}
         />
+        </>
       )}
     </div>
   );

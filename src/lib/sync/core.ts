@@ -9,9 +9,10 @@ export const WRITABLE_TABLES = [
   "engine_rules", "substitutions", "niggles", "niggle_entries",
   "races", "race_plans", "checklists", "checklist_items", "nutrition_products", "nutrition_protocols", "tolerance_logs",
   "push_subscriptions",
+  "seasons", "phases", "session_templates", "week_templates", "week_template_items", "import_batches",
 ] as const;
 /** Tables lues et gardées en local pour fonctionner hors ligne. */
-export const PULL_TABLES = [...WRITABLE_TABLES, "seasons", "phases", "session_templates"] as const;
+export const PULL_TABLES = [...WRITABLE_TABLES] as const;
 
 export type WritableTable = (typeof WRITABLE_TABLES)[number];
 export type PullTable = (typeof PULL_TABLES)[number];

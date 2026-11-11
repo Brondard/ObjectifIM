@@ -30,7 +30,8 @@ export default function SettingsPage() {
         <nav className="flex gap-3 text-sm underline">
           <Link href="/courses">Courses</Link>
           <Link href="/nutrition">Nutrition</Link>
-          <Link href="/saisons">Saisons</Link>
+          <Link href="/saison">Saison</Link>
+          <Link href="/plan">Plan</Link>
         </nav>
       </header>
       <RetestList />

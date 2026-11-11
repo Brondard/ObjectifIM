@@ -5,7 +5,7 @@ Next.js (App Router) · Supabase (Postgres, Auth, RLS, Storage) · Vercel.
 
 - [docs/decisions.md](docs/decisions.md) : décisions d'architecture
 - [docs/schema.md](docs/schema.md) : modèle de données et arbitrages
-- [schemas/](schemas/) : JSON Schema publiés (générés depuis Zod)
+- [schemas/](schemas/) : JSON Schema publiés (générés depuis Zod), dont le format d'import des blocs ; exemple dans [schemas/examples](schemas/examples/)
 
 ## Démarrer
 
@@ -51,4 +51,6 @@ supabase/        configuration et migrations
 | 6 | Analyse | livré |
 | 7 | Courses | livré |
 | 8 | PWA, hors ligne, notifications, ICS | livré |
-| 9 | Fonctionnalités reportées | |
+| 9a | Construire le plan : import JSON/CSV/markdown idempotent, export, motifs de semaine, masse, rebours, séances types, vues Saison et Mois | livré |
+| 9b | Musculation, matériel, météo, records, revue du dimanche, horaires piscine et club | |
+| 9 | Fonctionnalités reportées (Samsung Health, Google Agenda, lever, soleil, « il y a un an », simulateur) | |
