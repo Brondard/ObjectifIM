@@ -6,9 +6,10 @@
  *   2. tout le temps de course : répartition par zone de FC, prévu ou non.
  */
 import { EASY_TYPES, type IntensityAnalysis } from "../intensity";
+import type { BestEfforts } from "../life/records";
 
 export type SessionAnalysis = {
-  version: 2;
+  version: 3;
   intensity: IntensityAnalysis | null;
   zones: {
     basis: string;
@@ -24,9 +25,11 @@ export type SessionAnalysis = {
   blocks: { index: number; target_min: number; target_max: number; actual: number; delta_s: number }[] | null;
   /** Empreinte des repères, zones et règles utilisés : si elle change, l'analyse est recalculée. */
   ctx_key: string;
+  /** Meilleurs efforts de la séance (records) : temps par distance en course, puissance par durée à vélo. */
+  best: BestEfforts;
 };
 
-export const SESSION_ANALYSIS_VERSION = 2;
+export const SESSION_ANALYSIS_VERSION = 3;
 
 export type RigorInput = {
   local_date: string;

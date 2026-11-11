@@ -10,6 +10,7 @@ export const WRITABLE_TABLES = [
   "races", "race_plans", "checklists", "checklist_items", "nutrition_products", "nutrition_protocols", "tolerance_logs",
   "push_subscriptions",
   "seasons", "phases", "session_templates", "week_templates", "week_template_items", "import_batches",
+  "strength_exercises", "strength_sets", "equipment", "equipment_maintenance", "venues", "venue_slots",
 ] as const;
 /** Tables lues et gardées en local pour fonctionner hors ligne. */
 export const PULL_TABLES = [...WRITABLE_TABLES] as const;

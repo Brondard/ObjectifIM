@@ -134,6 +134,12 @@ export function placementViolations(x: PlacementInput): Violation[] {
   if (rules.on("deload_week_not_catchup") && !isLong(s, rules) && day !== s.date && isDeloadWeek(ctx, rules, week.start)) {
     v.push({ rule: "deload_week_not_catchup", label: "Semaine allégée", detail: "une semaine allégée ne sert pas à rattraper" });
   }
+  if (s.venue_id && rules.on("pool_slots")) {
+    const slots = (ctx.venueSlots ?? []).filter((v) => !v.deleted_at && v.venue_id === s.venue_id);
+    const open = slots.filter((v) => v.weekday === isoWeekday(day as LocalDate) && (!v.valid_from || v.valid_from <= day) && (!v.valid_to || v.valid_to >= day));
+    const fits = s.local_time ? open.some((v) => v.start_time <= s.local_time! && v.end_time > s.local_time!) : open.length > 0;
+    if (slots.length && !fits) v.push({ rule: "pool_slots", label: "Créneau du lieu", detail: `aucun créneau ouvert ${fr(day)}${s.local_time ? ` à ${s.local_time.slice(0, 5)}` : ""}` });
+  }
   if (x.catchup && rules.on("catchup_limit")) {
     const max = rules.p<number>("catchup_limit", "max_per_week", 1);
     if (x.catchupsUsed >= max) v.push({ rule: "catchup_limit", label: "Garde-fou du rattrapage", detail: `déjà ${x.catchupsUsed} séance rattrapée cette semaine (maximum ${max})` });

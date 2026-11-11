@@ -66,7 +66,7 @@ function Notifications() {
   const [message, setMessage] = useState<string | null>(null);
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   const rule = useLiveQuery(async () => (await engine.db.engine_rules.where("rule_key").equals("notifications").toArray()).find((r) => !r.deleted_at) ?? null, [engine.db]);
-  const prefs = { evening_preview: true, evening_unmarked: true, ...((rule?.params ?? {}) as object) } as { evening_preview: boolean; evening_unmarked: boolean };
+  const prefs = { evening_preview: true, evening_unmarked: true, weekly_review: true, ...((rule?.params ?? {}) as object) } as { evening_preview: boolean; evening_unmarked: boolean; weekly_review: boolean };
 
   useEffect(() => {
     if (!supported()) return;
@@ -103,7 +103,7 @@ function Notifications() {
     setEndpoint(null);
   }
 
-  const toggle = (k: "evening_preview" | "evening_unmarked") =>
+  const toggle = (k: "evening_preview" | "evening_unmarked" | "weekly_review") =>
     rule && void engine.mutate("engine_rules", rule.id, { params: { ...prefs, [k]: !prefs[k] } });
 
   return (
@@ -119,6 +119,7 @@ function Notifications() {
         <>
           <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.evening_preview} onChange={() => toggle("evening_preview")} className="h-5 w-5" /> La veille au soir : contenu précis de la séance du lendemain</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.evening_unmarked} onChange={() => toggle("evening_unmarked")} className="h-5 w-5" /> Le soir : séance du jour ni validée ni marquée manquée</label>
+          <label className="flex items-center gap-2"><input type="checkbox" checked={prefs.weekly_review} onChange={() => toggle("weekly_review")} className="h-5 w-5" /> Le dimanche soir : revue de la semaine</label>
         </>
       )}
     </div>

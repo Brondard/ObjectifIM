@@ -27,6 +27,12 @@ export type PushSubscriptionRow = Tables<"push_subscriptions">;
 export type WeekTemplate = Tables<"week_templates">;
 export type WeekTemplateItem = Tables<"week_template_items">;
 export type ImportBatch = Tables<"import_batches">;
+export type StrengthExercise = Tables<"strength_exercises">;
+export type StrengthSet = Tables<"strength_sets">;
+export type Equipment = Tables<"equipment">;
+export type EquipmentMaintenance = Tables<"equipment_maintenance">;
+export type Venue = Tables<"venues">;
+export type VenueSlot = Tables<"venue_slots">;
 
 export type ConflictRecord = {
   key: string; // `${table}:${id}:${field}`
@@ -73,6 +79,12 @@ export class LocalDb extends Dexie {
   week_templates!: Table<WeekTemplate, string>;
   week_template_items!: Table<WeekTemplateItem, string>;
   import_batches!: Table<ImportBatch, string>;
+  strength_exercises!: Table<StrengthExercise, string>;
+  strength_sets!: Table<StrengthSet, string>;
+  equipment!: Table<Equipment, string>;
+  equipment_maintenance!: Table<EquipmentMaintenance, string>;
+  venues!: Table<Venue, string>;
+  venue_slots!: Table<VenueSlot, string>;
   outbox!: Table<OutboxEntry, number>;
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
@@ -121,6 +133,15 @@ export class LocalDb extends Dexie {
     this.version(7).stores({ push_subscriptions: "id, endpoint" });
     // Jalon 9a : construction du plan (motifs de semaine, lots d'import).
     this.version(8).stores({ week_templates: "id", week_template_items: "id, week_template_id", import_batches: "id" });
+    // Jalon 9b : musculation, matériel, lieux.
+    this.version(9).stores({
+      strength_exercises: "id",
+      strength_sets: "id, completed_session_id, exercise_id",
+      equipment: "id",
+      equipment_maintenance: "id, equipment_id",
+      venues: "id",
+      venue_slots: "id, venue_id",
+    });
   }
 
   rows(table: PullTable): Table<Record<string, unknown> & { id: string }, string> {

@@ -70,7 +70,7 @@ begin
 
   -- 7. Table hors liste, colonne inconnue, valeur hors domaine : refusées
   begin
-    perform public.apply_mutations('[{"table":"venues","id":"00000000-0000-0000-0000-000000000001","ts":1,"fields":{}}]');
+    perform public.apply_mutations('[{"table":"profiles","id":"00000000-0000-0000-0000-000000000001","ts":1,"fields":{}}]');
     assert false, 'table hors liste acceptée';
   exception when invalid_parameter_value then ok := ok + 1;
   end;

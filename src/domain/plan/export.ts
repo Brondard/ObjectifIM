@@ -30,7 +30,7 @@ export function buildExport(input: {
   for (let w: string = weekStart(from as LocalDate); w <= to; w = addDays(w as LocalDate, 7)) weeks.push(w);
   const plannedById = new Map(input.planned.map((p) => [p.id, p]));
   const typeOf = (c: ExportCompleted) => (c.planned_session_id ? plannedById.get(c.planned_session_id)?.session_type ?? null : null);
-  const analysisOf = (c: ExportCompleted) => ((c.analysis as SessionAnalysis | null)?.version === 2 ? (c.analysis as SessionAnalysis) : null);
+  const analysisOf = (c: ExportCompleted) => ((c.analysis as SessionAnalysis | null)?.version === 3 ? (c.analysis as SessionAnalysis) : null);
 
   const adherence = adherenceByWeek(input.planned, input.completed, weeks, addDays(to as LocalDate, 1));
   const disciplines = [...new Set(input.planned.map((p) => p.discipline))];

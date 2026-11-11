@@ -7,6 +7,7 @@ import { inputClass, Field } from "@/components/session-form";
 import { EngineRulesSettings, SubstitutionsSettings } from "@/components/engine-settings";
 import { StravaSettings } from "@/components/strava-settings";
 import { PwaSettings } from "@/components/pwa-settings";
+import { VenuesSettings } from "@/components/venues-settings";
 import { RetestList } from "@/components/targets";
 import { BASES, DISCIPLINES, METHODS, METRICS, ZONE_SETUPS } from "@/domain/labels";
 import { PRESETS, computeZones, metricAt, zoneModelAt, type Bound, type Method, type MetricKind, type ZoneModel } from "@/domain/zones";
@@ -27,11 +28,15 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-8">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Réglages</h1>
-        <nav className="flex gap-3 text-sm underline">
+        <nav className="flex flex-wrap justify-end gap-x-3 gap-y-1 text-sm underline">
           <Link href="/courses">Courses</Link>
           <Link href="/nutrition">Nutrition</Link>
           <Link href="/saison">Saison</Link>
           <Link href="/plan">Plan</Link>
+          <Link href="/materiel">Matériel</Link>
+          <Link href="/musculation">Musculation</Link>
+          <Link href="/records">Records</Link>
+          <Link href="/revue">Revue</Link>
         </nav>
       </header>
       <RetestList />
@@ -39,6 +44,7 @@ export default function SettingsPage() {
       <StravaSettings />
       <MetricsSection metrics={metrics} />
       <ZonesSection metrics={metrics} models={models} />
+      <VenuesSettings />
       <EngineRulesSettings />
       <SubstitutionsSettings />
     </div>

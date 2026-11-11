@@ -12,8 +12,12 @@ export type EngineSession = {
   target_duration_s: number | null;
   original_date?: string | null;
   indoor?: boolean;
+  /** Lieu (piscine, club) : la séance n'est placée que sur un de ses créneaux ouverts. */
+  venue_id?: string | null;
   deleted_at?: string | null;
 };
+
+export type VenueSlot = { venue_id: string; weekday: number; start_time: string; end_time: string; valid_from: string | null; valid_to: string | null; deleted_at?: string | null };
 
 export type DoneSession = {
   local_date: string;
@@ -56,6 +60,7 @@ export type EngineContext = {
   substitutions: Substitution[];
   /** Rattrapages déjà faits dans la semaine (journal plan_changes). */
   catchupsThisWeek: number;
+  venueSlots?: VenueSlot[];
 };
 
 export type Trigger =

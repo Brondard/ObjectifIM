@@ -81,6 +81,9 @@ export const fetchActivity = (token: string, id: number) => get<StravaActivity>(
 export const listActivities = (token: string, page: number, perPage = 100) =>
   get<StravaActivity[]>(token, `/athlete/activities?page=${page}&per_page=${perPage}`);
 
+export type StravaGear = { id: string; name: string; distance: number; retired?: boolean };
+export const fetchAthlete = (token: string) => get<{ shoes?: StravaGear[]; bikes?: StravaGear[] }>(token, "/athlete");
+
 export const fetchStreams = (token: string, id: number) =>
   get<Record<string, { data: unknown[] }>>(token, `/activities/${id}/streams?keys=${STREAM_KEYS.join(",")}&key_by_type=true`);
 

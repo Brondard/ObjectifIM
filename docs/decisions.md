@@ -42,7 +42,11 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D35 | Import de blocs | Format JSON v1 (contrat : `schemas/plan-block.v1.json`, Zod à l'import, aperçu avant écriture), CSV et markdown sommaires. Le fichier fait foi sur sa période : clé de séance (fournie, sinon date + discipline + rang) mise à jour sans changer d'identifiant, séances non réalisées absentes supprimées (ajouts à la main compris), réalisé jamais touché. |
 | D36 | Motifs de semaine | Un motif appliqué produit un bloc, importé par le même mécanisme : réappliquer remplace au lieu de doubler. Progression par séance (+N min toutes les K semaines de charge, plafond) ; semaine allégée toutes les 3 ou 4 semaines à un pourcentage, où les séances clés passent secondaires et les structures sont retirées. |
 | D37 | Rebours | Base, construction (30 %), spécifique (25 %), affûtage (2 semaines, 3 au-delà de 20) ; semaines du lundi au dimanche, dernière semaine = semaine de course. |
-| D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10 : les activités « Workout » n'ont aucun exercice). Saisie manuelle en priorité, pré-remplie. |
+| D38 | Météo | Open-Meteo, sans clé, gardé en local 3 h (relu hors ligne), lieu dans la règle `weather` (Valbonne par défaut). Correction de chaleur : +0,4 % d'allure par degré au-delà de 20 °C, affichée à côté de la cible, jamais appliquée en silence. Pluie sur une séance longue ou clé extérieure : inversion proposée avec une séance d'un jour sec, appliquée seulement sur validation. |
+| D39 | Matériel Strava | Importé depuis le profil Strava : son kilométrage du jour devient le départ, seules les activités suivantes s'y ajoutent (pas de double compte). Rattachement automatique par l'équipement de l'activité. |
+| D40 | Records | Meilleurs efforts calculés sur les flux (temps sur 1, 5, 10 km, semi, marathon ; puissance 5, 20, 60 min), dans l'analyse de séance (version 3). |
+| D41 | Check-in | Deux indicateurs mauvais (seuils dans la règle `checkin_lighten`, FC de repos comparée à sa médiane des 3 semaines) : version allégée proposée (60 % de la durée, zone 1 ou 2, sans structure), appliquée seulement sur validation et journalisée. |
+| D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10). Saisie dans l'app : « + Série » recopie la série précédente ou celle de la dernière séance ; progression par exercice (charge max, 1RM estimé d'Epley jusqu'à 12 répétitions). |
 
 ## Jugement de l'intensité (arbitrage 7)
 

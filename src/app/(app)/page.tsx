@@ -9,10 +9,11 @@ import { planFeedback } from "@/domain/marking";
 import { useSync } from "@/lib/sync/provider";
 import { RetestList } from "@/components/targets";
 import { RaceReminders } from "@/components/race/reminders";
+import { CheckinAdvice } from "@/components/life";
 import { DISCIPLINES } from "@/domain/labels";
 import { formatDuration } from "@/lib/format";
 import { useCompletedBetween, usePlannedBetween } from "@/lib/sync/queries";
-import { addDays, formatLocalDate, today } from "@/lib/time";
+import { addDays, formatLocalDate, isoWeekday, today } from "@/lib/time";
 
 /** Écran d'accueil mobile : la séance du jour en grand, le check-in, la validation en un geste. */
 export default function TodayPage() {
@@ -62,6 +63,7 @@ export default function TodayPage() {
       </section>
 
       <CheckIn date={day} />
+      {planned && <CheckinAdvice sessions={planned} />}
 
       <RetestList includeMissing={false} />
 
@@ -75,6 +77,10 @@ export default function TodayPage() {
             </Link>
           ))}
         </section>
+      )}
+
+      {(isoWeekday(day) === 7 || isoWeekday(day) === 1) && (
+        <Link href="/revue" className="self-start text-sm underline">Revue de la semaine</Link>
       )}
 
       <DayNote date={day} />

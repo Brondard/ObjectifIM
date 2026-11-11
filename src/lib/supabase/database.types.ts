@@ -881,6 +881,7 @@ export type Database = {
           title: string | null
           updated_at: string
           user_id: string
+          venue_id: string | null
         }
         Insert: {
           _field_ts?: Json
@@ -909,6 +910,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+          venue_id?: string | null
         }
         Update: {
           _field_ts?: Json
@@ -937,6 +939,7 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+          venue_id?: string | null
         }
         Relationships: [
           {
@@ -951,6 +954,13 @@ export type Database = {
             columns: ["template_id", "user_id"]
             isOneToOne: false
             referencedRelation: "session_templates"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "planned_sessions_venue_id_user_id_fkey"
+            columns: ["venue_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
             referencedColumns: ["id", "user_id"]
           },
         ]

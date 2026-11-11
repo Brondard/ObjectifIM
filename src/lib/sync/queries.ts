@@ -125,7 +125,7 @@ export function useEngineContext(anchor: LocalDate): EngineContext | undefined {
   const { db } = useSync();
   return useLiveQuery(async () => {
     const start = weekStart(anchor);
-    const [sessions, done, phases, races, rules, substitutions, changes] = await Promise.all([
+    const [sessions, done, phases, races, rules, substitutions, changes, venueSlots] = await Promise.all([
       db.planned_sessions.where("date").between(addDays(start, -7), addDays(start, 13), true, true).toArray(),
       db.completed_sessions.where("local_date").between(addDays(start, -35), addDays(start, 6), true, true).toArray(),
       db.phases.toArray(),
@@ -133,6 +133,7 @@ export function useEngineContext(anchor: LocalDate): EngineContext | undefined {
       db.engine_rules.toArray(),
       db.substitutions.toArray(),
       db.plan_changes.toArray(),
+      db.venue_slots.toArray(),
     ]);
     const phase = phases.find((p) => !p.deleted_at && p.start_date <= anchor && p.end_date >= anchor) ?? null;
     return {
@@ -145,6 +146,7 @@ export function useEngineContext(anchor: LocalDate): EngineContext | undefined {
       aRaceDates: races.filter((r) => !r.deleted_at && r.priority === "A").map((r) => r.date),
       substitutions: substitutions.filter((x) => !x.deleted_at).map((x) => ({ ...x, duration_ratio: Number(x.duration_ratio) })),
       catchupsThisWeek: catchupsIn(changes, start, addDays(start, 6)),
+      venueSlots: venueSlots.filter((v) => !v.deleted_at),
     };
   }, [db, anchor]);
 }

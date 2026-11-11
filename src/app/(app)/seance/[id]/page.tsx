@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { v7 as uuidv7 } from "uuid";
 import { MatchPrompt, RealizedAnalysis } from "@/components/realized";
+import { StrengthLog } from "@/components/strength-log";
+import { EquipmentPicker, WeatherLine } from "@/components/life";
+import { planMark } from "@/domain/marking";
 import { SessionFuel } from "@/components/race/reminders";
 import { Feedback } from "@/components/session-card";
 import { TargetLines, resolveStep, targetLabel } from "@/components/targets";
@@ -74,7 +77,17 @@ export default function SessionPage() {
         <TargetLines session={session} />
       </section>
 
+      <WeatherLine session={session} />
       <SessionFuel session={session} />
+
+      {session.discipline === "strength" && completions.length === 0 && (
+        <button
+          onClick={() => void engine.mutateMany(planMark(session, { kind: "done" }, { manualCompletion: null, newId: uuidv7(), at: nowIso() }))}
+          className="h-12 rounded-md bg-foreground font-medium text-background"
+        >
+          Commencer : saisir les séries
+        </button>
+      )}
 
       {structure?.success && (
         <section className="flex flex-col gap-1 text-sm">
@@ -104,6 +117,8 @@ export default function SessionPage() {
               ) : (
                 <RealizedAnalysis planned={session} completion={c} />
               )}
+              {c.discipline === "strength" && <StrengthLog completion={c} sessionType={session.session_type} />}
+              {(c.discipline === "run" || c.discipline === "bike") && <EquipmentPicker completion={c} />}
               <Feedback
                 key={c.id}
                 rpe={c.rpe}

@@ -27,6 +27,19 @@ export async function sessionsBetween(admin: AdminClient, userId: string, from: 
   return (data ?? []) as ServerSession[];
 }
 
+/** Séances réalisées d'un utilisateur entre deux dates. */
+export async function completedBetween(admin: AdminClient, userId: string, from: string, to: string) {
+  const { data, error } = await admin
+    .from("completed_sessions")
+    .select("id, local_date, discipline, planned_session_id, elapsed_s, moving_s, distance_m, analysis, name, deleted_at")
+    .eq("user_id", userId)
+    .gte("local_date", from)
+    .lte("local_date", to)
+    .is("deleted_at", null);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
 /** Repères, zones et règles de cible d'un utilisateur : de quoi écrire « FC Z2 · 116–136 bpm ». */
 export async function targetContext(admin: AdminClient, userId: string): Promise<TargetContext> {
   const [metrics, models, rules] = await Promise.all([

@@ -196,3 +196,18 @@ describe("journal", () => {
     expect(c.sessions.every(isActive)).toBe(true);
   });
 });
+
+describe("créneaux de lieu", () => {
+  it("une séance de piscine n'est déplacée que sur un créneau ouvert", () => {
+    const sessions = WEEK.map((x) => (x.id === "thu_swim" ? { ...x, venue_id: "pool", local_time: "07:30" } : x));
+    const venueSlots = [
+      { venue_id: "pool", weekday: 1, start_time: "07:00", end_time: "09:00", valid_from: null, valid_to: null },
+      { venue_id: "pool", weekday: 4, start_time: "07:00", end_time: "09:00", valid_from: null, valid_to: null },
+      { venue_id: "pool", weekday: 6, start_time: "12:00", end_time: "14:00", valid_from: null, valid_to: null },
+    ];
+    const p = propose(ctx({ sessions, venueSlots }), { kind: "move", sessionId: "thu_swim", to: "2026-11-17" });
+    expect(p.notes.join(" ")).toMatch(/aucun créneau ouvert/);
+    // Lundi seul reste valide (samedi : créneau de midi, pas à 7 h 30).
+    expect(p.options.filter((o) => o.key.startsWith("move")).map((o) => (o.changes[0] as { to: string }).to)).toEqual(["2026-11-16"]);
+  });
+});

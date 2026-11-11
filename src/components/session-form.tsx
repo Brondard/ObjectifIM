@@ -11,7 +11,9 @@ import {
 } from "@/domain/labels";
 import { parseIntensity, type Intensity } from "@/domain/session-structure";
 import { formatClock, parseClock } from "@/lib/format";
+import { useLiveQuery } from "dexie-react-hooks";
 import type { PlannedSession } from "@/lib/sync/db";
+import { useSync } from "@/lib/sync/provider";
 
 export type SessionFormValues = {
   date: string;
@@ -26,6 +28,7 @@ export type SessionFormValues = {
   instructions: string | null;
   indoor: boolean;
   target_intensity: Intensity | null;
+  venue_id?: string | null;
 };
 
 export const inputClass =
@@ -160,6 +163,7 @@ export function SessionForm({
               <input value={v.title ?? ""} onChange={(e) => set("title", e.target.value)} className={inputClass} />
             </Field>
           </div>
+          <VenueSelect value={v.venue_id ?? null} onChange={(id) => set("venue_id", id)} />
           <IntensityEditor
             discipline={v.discipline}
             value={v.target_intensity}
@@ -194,6 +198,7 @@ export function valuesOf(s: PlannedSession): SessionFormValues {
     instructions: s.instructions,
     indoor: s.indoor,
     target_intensity: parseIntensity(s.target_intensity),
+    venue_id: s.venue_id,
   };
 }
 
@@ -302,5 +307,20 @@ function IntensityEditor({
         <p className="text-xs text-neutral-500">Zone par défaut du type de séance, calculée avec tes repères à la date de la séance.</p>
       )}
     </fieldset>
+  );
+}
+
+/** Lieu de la séance (piscine, club) : la replanification respecte ses créneaux. */
+function VenueSelect({ value, onChange }: { value: string | null; onChange: (id: string | null) => void }) {
+  const { db } = useSync();
+  const venues = useLiveQuery(async () => (await db.venues.toArray()).filter((v) => !v.deleted_at), [db]);
+  if (!venues?.length) return null;
+  return (
+    <Field label="Lieu">
+      <select value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} className={inputClass}>
+        <option value="">—</option>
+        {venues.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+      </select>
+    </Field>
   );
 }

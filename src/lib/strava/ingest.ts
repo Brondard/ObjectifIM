@@ -14,7 +14,11 @@ import { accessToken, connectionFor, fetchActivity, fetchStreams, type Connectio
  * Une mise à jour ne touche qu'aux données Strava : ni RPE, ni ressenti, ni rattachement, ni suppression.
  */
 export async function upsertActivity(admin: AdminClient, userId: string, a: StravaActivity): Promise<string> {
-  const fields = completedFieldsFrom(a);
+  // Matériel : chaussures ou vélo associés via l'équipement Strava de l'activité.
+  const gear = a.gear_id
+    ? (await admin.from("equipment").select("id").eq("user_id", userId).eq("strava_gear_id", a.gear_id).is("deleted_at", null).maybeSingle()).data
+    : null;
+  const fields = { ...completedFieldsFrom(a), ...(gear ? { equipment_id: gear.id } : {}) };
   const { data: existing, error } = await admin
     .from("completed_sessions")
     .select("id")

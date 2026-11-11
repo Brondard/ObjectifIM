@@ -8,6 +8,7 @@ import type { Streams } from "../strava";
 import { resolveTargets, type TargetContext } from "../targets";
 import { computeZones, isApproximate, zoneModelAt, type Basis } from "../zones";
 import { SESSION_ANALYSIS_VERSION, type SessionAnalysis } from "./rigor";
+import { bestEfforts } from "../life/records";
 import { blockPaces, cadenceDrop, cardiacDrift, timeInZones } from "./streams";
 
 export type AnalysisCompletion = {
@@ -91,5 +92,5 @@ export function analyzeSession(c: AnalysisCompletion, planned: AnalysisPlanned |
   const structure = planned?.structure ? SessionStructure.safeParse(planned.structure) : null;
   const blocks = structure?.success ? blockPaces(streams, structure.data) : null;
 
-  return { version: SESSION_ANALYSIS_VERSION, ctx_key: contextKey(ctx), intensity, zones, drift: drift && c.discipline === "bike" && drift.mode === "pace" ? null : drift, cadence, blocks };
+  return { version: SESSION_ANALYSIS_VERSION, ctx_key: contextKey(ctx), best: bestEfforts(streams, c.discipline), intensity, zones, drift: drift && c.discipline === "bike" && drift.mode === "pace" ? null : drift, cadence, blocks };
 }

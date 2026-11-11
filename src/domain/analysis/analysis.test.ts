@@ -149,10 +149,10 @@ describe("analyse d'une séance", () => {
 
 describe("rigueur : est-ce que je cours trop vite ?", () => {
   const easy = (verdict: "ok" | "too_hard", above: number, zones: number[]): SessionAnalysis => ({
-    version: 2,
+    version: 3,
     intensity: { version: 1, basis: "hr", target: { min: 116, max: 136 }, analysed_s: 2700, above_pct: above, below_pct: 0, in_pct: 100 - above, mean: 130, verdict },
     zones: { basis: "hr", method: "pct_hrmax", seconds: zones, outside: 0, bounds: [], approx: false },
-    drift: null, cadence: null, blocks: null, ctx_key: "k",
+    drift: null, cadence: null, blocks: null, ctx_key: "k", best: {},
   });
 
   it("donne une réponse chiffrée", () => {

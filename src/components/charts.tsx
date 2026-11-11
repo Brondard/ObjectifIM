@@ -145,3 +145,20 @@ export function ProfileChart({ samples }: { samples: { d: number; ele: number }[
     </ResponsiveContainer>
   );
 }
+
+/** Progression d'un exercice : charge maximale et 1RM estimé, même unité (kg), donc un seul axe. */
+export function StrengthProgressChart({ data }: { data: { label: string; top: number | null; e1rm: number | null }[] }) {
+  return (
+    <ResponsiveContainer>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+        <CartesianGrid vertical={false} stroke="var(--viz-grid)" />
+        <XAxis dataKey="label" {...axis} interval="preserveStartEnd" minTickGap={24} />
+        <YAxis {...axis} width={48} domain={["auto", "auto"]} tickFormatter={(v) => `${number(v)} kg`} />
+        <Tooltip {...tooltipStyle} formatter={(v, name) => [`${number(Number(v))} kg`, String(name)]} />
+        <Legend iconType="plainline" wrapperStyle={{ fontSize: 12 }} formatter={legendText} />
+        <Line dataKey="top" name="Charge max" stroke="var(--viz-planned)" strokeWidth={2} dot={{ r: 4 }} connectNulls isAnimationActive={false} />
+        <Line dataKey="e1rm" name="1RM estimé" stroke="var(--viz-done)" strokeWidth={2} dot={{ r: 4 }} connectNulls isAnimationActive={false} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
