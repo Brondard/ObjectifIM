@@ -49,6 +49,9 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D42 | Agenda personnel | Lecture seule par l'adresse secrète iCal de Google Agenda (pas d'OAuth : jetons valables 7 jours tant que l'app n'est pas vérifiée par Google). Adresse gardée dans le schéma `private`, limitée à `calendar.google.com` (le serveur ne va rien chercher ailleurs). Récurrences quotidiennes et hebdomadaires dépliées à heure locale constante. Créneaux occupés gardés en local, rafraîchis toutes les heures. |
 | D43 | Soleil, lever | Lever et coucher du soleil calculés sans réseau (algorithme de la NOAA, à la minute près). Heure de lever = départ − préparation (règle `wake`) − trajet du lieu. |
 | D44 | Samsung Health | Pas de voie propre pour une application web (SDK Android uniquement) : check-in manuel conservé, modèle prêt pour un import futur. Détail dans `docs/samsung-health.md`. |
+| D45 | Plafond des footings | Footing, récupération, sortie longue : plafond de FC **en bpm absolus par type de séance** (règle `easy_hr_ceilings`), plus une borne de zone. Thomas : 150 bpm ; sortie longue 150 puis 155 sur le dernier tiers. Les zones restent pour les séances qualitatives et la répartition du temps. |
+| D46 | « Est-ce que je cours trop vite ? » | Verdict calculé **uniquement sur les footings prévus et analysés** ; sinon « pas encore de données ». Le temps par zone et les sorties non planifiées sont affichés comme information, jamais comme verdict. |
+| D47 | Ratio aigu / chronique | Non significatif (courbe interrompue, aucun signal, ignoré par le moteur) si la fenêtre de 28 jours contient une course ou une semaine sous 30 % de la plus chargée. |
 | D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10). Saisie dans l'app : « + Série » recopie la série précédente ou celle de la dernière séance ; progression par exercice (charge max, 1RM estimé d'Epley jusqu'à 12 répétitions). |
 
 ## Jugement de l'intensité (arbitrage 7)
@@ -56,7 +59,7 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 Critère par type de séance : voir la table du cahier des charges. Précisions pour les séances jugées à la FC :
 
 - Les **3 premières minutes** sont écartées (stabilisation, capteur optique à froid).
-- On juge le **pourcentage de temps au-dessus du plafond de zone**, pas la moyenne. Seuil d'alerte par défaut : **15 %** (paramètre de `engine_rules.intensity_judgement`).
+- On juge le **pourcentage de temps au-dessus du plafond** (plafond de footing en bpm, D45, ou borne haute de la zone pour les autres séances), pas la moyenne. Seuil d'alerte par défaut : **15 %** (paramètre de `engine_rules.intensity_judgement`).
 - Si la FC est aberrante (décrochage, incohérence avec l'allure), `hr_reliable = false` : l'allure et le RPE reprennent la main, et l'écran l'indique.
 - Corrections de pente et de chaleur (> 20 °C) affichées explicitement, jamais appliquées en silence.
 

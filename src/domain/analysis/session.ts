@@ -5,7 +5,7 @@
 import { analyzeIntensity, EASY_TYPES } from "../intensity";
 import { parseIntensity, SessionStructure } from "../session-structure";
 import type { Streams } from "../strava";
-import { resolveTargets, type TargetContext } from "../targets";
+import { easyCeiling, resolveTargets, type TargetContext } from "../targets";
 import { computeZones, isApproximate, zoneModelAt, type Basis } from "../zones";
 import { SESSION_ANALYSIS_VERSION, type SessionAnalysis } from "./rigor";
 import { bestEfforts } from "../life/records";
@@ -45,6 +45,8 @@ export function contextKey(ctx: TargetContext): string {
   return h.toString(36);
 }
 
+const hasHr = (s: Streams, c: AnalysisCompletion) => c.hr_reliable !== false && Array.isArray(s.heartrate) && (s.heartrate as number[]).some((v) => v > 30);
+
 const has = (s: Streams, k: keyof Streams) => Array.isArray(s[k]) && (s[k] as unknown[]).some((v) => typeof v === "number" && v > 0);
 
 /** Cible absolue de jugement : arbitrage 7 ; si la FC est déclarée aberrante, l'allure prend le relais. */
@@ -52,7 +54,7 @@ export function judgedTarget(planned: AnalysisPlanned, completion: AnalysisCompl
   const targets = resolveTargets(planned, ctx, parseIntensity).filter((t) => t.status === "ok");
   const usable = completion.hr_reliable === false ? targets.filter((t) => t.basis !== "hr") : targets;
   const t = usable[0];
-  return t && t.status === "ok" ? { basis: t.basis, min: t.min, max: t.max } : null;
+  return t && t.status === "ok" ? { basis: t.basis, min: t.min, max: t.max, max_end: t.max_end ?? null, end_from_pct: t.end_from_pct ?? null } : null;
 }
 
 export function analyzeSession(c: AnalysisCompletion, planned: AnalysisPlanned | null, streams: Streams, ctx: TargetContext): SessionAnalysis {
@@ -60,6 +62,10 @@ export function analyzeSession(c: AnalysisCompletion, planned: AnalysisPlanned |
 
   const target = planned ? judgedTarget(planned, c, ctx) : null;
   const intensity = planned && target ? analyzeIntensity(streams, target, EASY_TYPES.has(planned.session_type), params) : null;
+
+  // Sortie de course non planifiée : temps au-dessus du plafond de footing, à titre d'information (pas de verdict).
+  const footing = !planned && c.discipline === "run" && hasHr(streams, c) ? easyCeiling("endurance", ctx.rules.easyCeilings) : null;
+  const unplanned_easy = footing && footing.status === "ok" ? analyzeIntensity(streams, { basis: "hr", min: null, max: footing.max }, true, params) : null;
 
   // Temps par zone : FC si fiable, sinon allure (course) ou puissance (vélo).
   const hrOk = c.hr_reliable !== false && has(streams, "heartrate");
@@ -92,5 +98,5 @@ export function analyzeSession(c: AnalysisCompletion, planned: AnalysisPlanned |
   const structure = planned?.structure ? SessionStructure.safeParse(planned.structure) : null;
   const blocks = structure?.success ? blockPaces(streams, structure.data) : null;
 
-  return { version: SESSION_ANALYSIS_VERSION, ctx_key: contextKey(ctx), best: bestEfforts(streams, c.discipline), intensity, zones, drift: drift && c.discipline === "bike" && drift.mode === "pace" ? null : drift, cadence, blocks };
+  return { version: SESSION_ANALYSIS_VERSION, ctx_key: contextKey(ctx), best: bestEfforts(streams, c.discipline), intensity, unplanned_easy, zones, drift: drift && c.discipline === "bike" && drift.mode === "pace" ? null : drift, cadence, blocks };
 }

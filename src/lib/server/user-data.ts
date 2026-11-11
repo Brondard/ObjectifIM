@@ -1,6 +1,6 @@
 import "server-only";
 import { parseIntensity } from "@/domain/session-structure";
-import { resolveTargets, type TargetContext } from "@/domain/targets";
+import { ceilingsFrom, resolveTargets, type TargetContext } from "@/domain/targets";
 import { BASES } from "@/domain/labels";
 import type { ZoneModel } from "@/domain/zones";
 import type { CalendarSession } from "@/domain/calendar";
@@ -45,7 +45,7 @@ export async function targetContext(admin: AdminClient, userId: string): Promise
   const [metrics, models, rules] = await Promise.all([
     admin.from("metrics").select("kind, value, measured_on, deleted_at").eq("user_id", userId).is("deleted_at", null),
     admin.from("zone_models").select("discipline, basis, method, bounds, overrides, valid_from, deleted_at").eq("user_id", userId).is("deleted_at", null),
-    admin.from("engine_rules").select("rule_key, params").eq("user_id", userId).is("deleted_at", null).in("rule_key", ["default_intensity_by_type", "intensity_judgement"]),
+    admin.from("engine_rules").select("rule_key, params").eq("user_id", userId).is("deleted_at", null).in("rule_key", ["default_intensity_by_type", "intensity_judgement", "easy_hr_ceilings"]),
   ]);
   const params = (key: string) => (rules.data?.find((r) => r.rule_key === key)?.params ?? {}) as Record<string, unknown>;
   return {
@@ -54,6 +54,7 @@ export async function targetContext(admin: AdminClient, userId: string): Promise
     rules: {
       defaultZoneByType: params("default_intensity_by_type") as Record<string, number | null>,
       judgementByType: (params("intensity_judgement").by_session_type ?? {}) as Record<string, string>,
+      easyCeilings: ceilingsFrom(params("easy_hr_ceilings")),
     },
   };
 }
@@ -63,6 +64,6 @@ export function targetText(ctx: TargetContext) {
   return (s: CalendarSession) => {
     const t = resolveTargets(s as ServerSession, ctx, parseIntensity).find((x) => x.status === "ok");
     if (!t || t.status !== "ok") return null;
-    return `${BASES[t.basis]} ${t.zone != null ? `Z${t.zone} · ` : ""}${formatRange(t.basis, t.min, t.max)}`;
+    return `${BASES[t.basis]} ${t.zone != null ? `Z${t.zone} · ` : ""}${formatRange(t.basis, t.min, t.max)}${t.max_end ? `, ${t.max_end} en fin de sortie` : ""}`;
   };
 }

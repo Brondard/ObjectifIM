@@ -4,7 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { catchupsIn } from "@/domain/engine/apply";
 import type { EngineContext } from "@/domain/engine/types";
 import { addDays, compareLocalDates, today, weekStart, type LocalDate } from "@/lib/time";
-import type { TargetContext } from "@/domain/targets";
+import { ceilingsFrom, type TargetContext } from "@/domain/targets";
 import type { ZoneModel } from "@/domain/zones";
 import type { CompletedSession, PlannedSession } from "./db";
 import { useSync } from "./provider";
@@ -83,7 +83,7 @@ export function useTargetContext(): TargetContext | undefined {
     const [metrics, models, rules] = await Promise.all([
       db.metrics.toArray(),
       db.zone_models.toArray(),
-      db.engine_rules.where("rule_key").anyOf("default_intensity_by_type", "intensity_judgement").toArray(),
+      db.engine_rules.where("rule_key").anyOf("default_intensity_by_type", "intensity_judgement", "easy_hr_ceilings").toArray(),
     ]);
     const params = (key: string) =>
       (rules.find((r) => r.rule_key === key && !r.deleted_at)?.params ?? {}) as Record<string, unknown>;
@@ -97,6 +97,7 @@ export function useTargetContext(): TargetContext | undefined {
           skipFirstS: Number(params("intensity_judgement").hr_skip_first_s ?? 180),
           alertPct: Number(params("intensity_judgement").hr_above_ceiling_alert_pct ?? 15),
         },
+        easyCeilings: ceilingsFrom(params("easy_hr_ceilings")),
       },
     };
   }, [db]);
@@ -144,6 +145,7 @@ export function useEngineContext(anchor: LocalDate): EngineContext | undefined {
       phaseType: phase?.type ?? null,
       phaseParams: (phase?.engine_params ?? {}) as Record<string, unknown>,
       aRaceDates: races.filter((r) => !r.deleted_at && r.priority === "A").map((r) => r.date),
+      raceDates: races.filter((r) => !r.deleted_at).map((r) => r.date),
       substitutions: substitutions.filter((x) => !x.deleted_at).map((x) => ({ ...x, duration_ratio: Number(x.duration_ratio) })),
       catchupsThisWeek: catchupsIn(changes, start, addDays(start, 6)),
       venueSlots: venueSlots.filter((v) => !v.deleted_at),

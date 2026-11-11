@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { localDate } from "@/lib/time";
 import { PRESETS, type ZoneModel } from "../zones";
 import { adherenceByWeek, skipReasons, weeksBack } from "./adherence";
-import { acwrSeries, dailyLoads, foster, sessionLoad } from "./load";
+import { acwrSeries, acwrUnreliable, dailyLoads, foster, sessionLoad } from "./load";
 import { rigor, type SessionAnalysis } from "./rigor";
 import { analyzeSession, contextKey } from "./session";
 import { chainSignals, niggleSignals } from "./signals";
@@ -52,6 +52,20 @@ describe("charge", () => {
     expect(series[27].acwr).toBe(1);
     const spike = dailyLoads([...sessions, c("2026-11-04", 300, 8)], "2026-10-01", "2026-11-04", p);
     expect(acwrSeries(spike).at(-1)!.acwr).toBeGreaterThan(1.5);
+  });
+
+  it("ratio aigu / chronique non significatif avec une course ou un arrêt dans la fenêtre", () => {
+    const regular = Array(28).fill(100);
+    expect(acwrUnreliable(regular, "2026-10-01", "2026-10-28", [])).toBeNull();
+    expect(acwrUnreliable(regular, "2026-10-01", "2026-10-28", ["2026-10-12"])).toMatch(/course le 2026-10-12/);
+    expect(acwrUnreliable(regular, "2026-10-01", "2026-10-28", ["2026-11-02"])).toBeNull();
+    const stop = [...Array(7).fill(100), ...Array(7).fill(0), ...Array(14).fill(100)];
+    expect(acwrUnreliable(stop, "2026-10-01", "2026-10-28", [])).toMatch(/arrêt/);
+    const sessions = range(35).map((i) => c(`2026-10-${String(1 + i).padStart(2, "0")}`.replace(/2026-10-3[2-5]/, (m) => `2026-11-0${Number(m.slice(-2)) - 31}`), 60, 5));
+    const days = dailyLoads(sessions, "2026-10-01", "2026-11-04", p);
+    const last = acwrSeries(days, ["2026-10-20"]).at(-1)!;
+    expect(last.acwr).toBeNull();
+    expect(last.unreliable).toMatch(/course/);
   });
 
   it("monotonie et contrainte de Foster", () => {
@@ -163,12 +177,21 @@ describe("rigueur : est-ce que je cours trop vite ?", () => {
       { local_date: "2026-11-07", discipline: "run", planned_type: "threshold", analysis: easy("ok", 0, [0, 600, 600, 1600, 200]) },
     ], 4);
     expect(r).toMatchObject({ easyAnalysed: 3, easyTooHard: 2, easyTooHardPct: 67, meanAboveCeilingPct: 22.3 });
-    expect(r.aboveZ2Pct).toBe(46);
-    expect(r.sentence).toMatch(/^Sur les 4 dernières semaines, 67 % de tes footings faciles \(2 sur 3\)/);
+    expect(r.sentence).toMatch(/^Sur les 4 dernières semaines, 67 % de tes footings prévus \(2 sur 3\)/);
+    expect(r.sentence).not.toMatch(/zone 2/);
   });
 
   it("dit honnêtement quand il n'y a pas de quoi répondre", () => {
-    expect(rigor([], 4).sentence).toMatch(/Pas encore assez/);
+    expect(rigor([], 4).sentence).toMatch(/^Pas encore de données/);
+    // Des sorties non planifiées ne produisent aucun verdict, seulement une information à part.
+    const free: SessionAnalysis = {
+      ...easy("ok", 0, [0, 0, 3000, 0, 0]),
+      intensity: null,
+      unplanned_easy: { version: 1, basis: "hr", target: { min: null, max: 150 }, analysed_s: 3000, above_pct: 20, below_pct: 0, in_pct: 80, mean: 145, verdict: "too_hard" },
+    };
+    const r = rigor([{ local_date: "2026-11-02", discipline: "run", planned_type: null, analysis: free }], 4);
+    expect(r.sentence).toMatch(/^Pas encore de données/);
+    expect(r).toMatchObject({ easyAnalysed: 0, easyTooHardPct: null, meanAboveCeilingPct: null, unplannedAnalysed: 1, unplannedAbovePct: 20 });
   });
 });
 

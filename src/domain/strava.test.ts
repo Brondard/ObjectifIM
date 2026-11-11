@@ -80,6 +80,18 @@ const hrStreams = (seconds: number, hr: (t: number) => number) => ({
 describe("respect de l'intensité", () => {
   const z2 = { basis: "hr" as const, min: 116, max: 136 };
 
+  it("sortie longue : plafond relevé sur le dernier tiers", () => {
+    // 3 min écartées puis 90 min : 148 bpm pendant 60 min, 154 bpm sur les 30 dernières.
+    const s = hrStreams(180 + 5400, (t) => (t < 180 + 3600 ? 148 : 154));
+    const long = { basis: "hr" as const, min: null, max: 150, max_end: 155, end_from_pct: 67 };
+    const r = analyzeIntensity(s, long, true)!;
+    expect(r.verdict).toBe("ok");
+    expect(r.above_pct).toBeLessThan(2);
+    expect(r.target).toMatchObject({ max: 150, max_end: 155 });
+    // Le même tracé jugé à 150 tout du long dépasse.
+    expect(analyzeIntensity(s, { ...long, max_end: null }, true)!.verdict).toBe("too_hard");
+  });
+
   it("juge le temps au-dessus du plafond, pas la moyenne", () => {
     // 20 min à 120 puis 20 min à 150 : moyenne 135, dans la cible, mais la moitié du temps au-dessus.
     const r = analyzeIntensity(hrStreams(2400 + 180, (t) => (t < 180 ? 90 : t < 1380 ? 120 : 150)), z2, true);

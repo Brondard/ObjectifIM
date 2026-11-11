@@ -16,12 +16,16 @@ export const EASY_TYPES = new Set(["endurance", "long", "recovery"]);
 export type IntensityParams = { skipFirstS: number; alertPct: number };
 export const DEFAULT_INTENSITY_PARAMS: IntensityParams = { skipFirstS: 180, alertPct: 15 };
 
-export type IntensityTarget = { basis: Basis; min: number | null; max: number | null };
+/**
+ * Cible de jugement. `max_end` : plafond relevé sur la fin de la séance (sortie longue : 150 bpm, puis 155
+ * à partir de `end_from_pct` % du temps analysé).
+ */
+export type IntensityTarget = { basis: Basis; min: number | null; max: number | null; max_end?: number | null; end_from_pct?: number | null };
 
 export type IntensityAnalysis = {
   version: number;
   basis: Basis;
-  target: { min: number | null; max: number | null };
+  target: { min: number | null; max: number | null; max_end?: number | null; end_from_pct?: number | null };
   analysed_s: number;
   /** Temps trop intense : FC/puissance au-dessus du plafond, allure plus rapide que la borne rapide. */
   above_pct: number;
@@ -73,10 +77,14 @@ export function analyzeIntensity(
   easy: boolean,
   params: IntensityParams = DEFAULT_INTENSITY_PARAMS,
 ): IntensityAnalysis | null {
-  const time = streams.time;
+  const time = streams.time as number[];
   const moving = streams.moving as boolean[] | undefined;
   const skip = target.basis === "hr" ? params.skipFirstS : 0;
   let total = 0, above = 0, below = 0, weighted = 0;
+  // Plafond de fin de séance : appliqué à partir d'une fraction de la durée analysée.
+  const first = time.find((t) => t >= skip) ?? 0;
+  const span = Math.max(1, (time.at(-1) ?? 0) - first);
+  const endFrom = target.max_end != null && target.end_from_pct != null ? first + (span * target.end_from_pct) / 100 : Infinity;
 
   for (let i = 0; i < time.length - 1; i++) {
     if (time[i] < skip) continue;
@@ -88,7 +96,7 @@ export function analyzeIntensity(
     if (v == null) continue;
     total += dt;
     weighted += v * dt;
-    const c = classify(target.basis, v, target);
+    const c = classify(target.basis, v, time[i] >= endFrom ? { ...target, max: target.max_end ?? target.max } : target);
     if (c === "above") above += dt;
     else if (c === "below") below += dt;
   }
@@ -101,7 +109,7 @@ export function analyzeIntensity(
   return {
     version: ANALYSIS_VERSION,
     basis: target.basis,
-    target: { min: target.min, max: target.max },
+    target: { min: target.min, max: target.max, ...(target.max_end != null ? { max_end: target.max_end, end_from_pct: target.end_from_pct } : {}) },
     analysed_s: Math.round(total),
     above_pct,
     below_pct,

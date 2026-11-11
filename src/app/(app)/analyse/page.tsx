@@ -30,12 +30,13 @@ export default function AnalysisPage() {
   const [progress, setProgress] = useState<string | null>(null);
 
   const data = useLiveQuery(async () => {
-    const [planned, completed, rules, niggles, entries] = await Promise.all([
+    const [planned, completed, rules, niggles, entries, races] = await Promise.all([
       db.planned_sessions.where("date").between(from, addDays(now, 7), true, true).toArray(),
       db.completed_sessions.where("local_date").between(addDays(from as LocalDate, -28), addDays(now, 7), true, true).toArray(),
       db.engine_rules.toArray(),
       db.niggles.toArray(),
       db.niggle_entries.toArray(),
+      db.races.toArray(),
     ]);
     return {
       planned: planned.filter((p) => !p.deleted_at),
@@ -43,6 +44,7 @@ export default function AnalysisPage() {
       rules: rules.filter((r) => !r.deleted_at),
       niggles,
       entries,
+      raceDates: races.filter((x) => !x.deleted_at).map((x) => x.date),
     };
   }, [db, from, now]);
 
@@ -100,12 +102,16 @@ export default function AnalysisPage() {
 
   // ─── Charge ──────────────────────────────────────────────────────────────
   const days = dailyLoads(data.completed.map((c) => ({ ...c, session_type: typeOf(c) })), addDays(from as LocalDate, -28), now, loadParams);
-  const acwr = acwrSeries(days).filter((d) => d.date >= from).map((d) => ({ label: short(d.date), acwr: d.acwr }));
+  const acwrFull = acwrSeries(days, data.raceDates).filter((d) => d.date >= from);
+  const acwr = acwrFull.map((d) => ({ label: short(d.date), acwr: d.acwr }));
+  // Valeur du jour seulement : jamais une ancienne valeur quand le ratio du jour n'est pas interprétable.
+  const acwrToday = acwrFull.at(-1);
+  const acwrNote = acwrToday?.unreliable ? `Ratio non significatif aujourd'hui : ${acwrToday.unreliable}.` : null;
   const weekly = weeks.map((w) => {
     const wd = days.filter((d) => d.date >= w && d.date <= addDays(w as LocalDate, 6));
     return { label: short(w), ...foster(wd), estimated: Math.round(wd.reduce((a, d) => a + d.estimated, 0)) };
   });
-  const currentAcwr = [...acwr].reverse().find((d) => d.acwr != null)?.acwr ?? null;
+  const currentAcwr = acwrToday?.acwr ?? null;
 
   // ─── Signaux ─────────────────────────────────────────────────────────────
   const around = [
@@ -136,14 +142,13 @@ export default function AnalysisPage() {
       <section className="flex flex-col gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-800">
         <h2 className="font-medium">Est-ce que je cours trop vite ?</h2>
         <p className="text-lg leading-snug">{r.sentence}</p>
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <Stat value={r.easyTooHardPct == null ? "—" : `${r.easyTooHardPct} %`} label="footings faciles trop intenses" alert={(r.easyTooHardPct ?? 0) > 20} />
+        <div className="grid grid-cols-2 gap-2 text-center">
+          <Stat value={r.easyTooHardPct == null ? "—" : `${r.easyTooHardPct} %`} label="footings prévus au-dessus du plafond" alert={(r.easyTooHardPct ?? 0) > 20} />
           <Stat value={r.meanAboveCeilingPct == null ? "—" : `${r.meanAboveCeilingPct} %`} label="du temps au-dessus du plafond, en moyenne" alert={(r.meanAboveCeilingPct ?? 0) > 15} />
-          <Stat value={r.aboveZ2Pct == null ? "—" : `${r.aboveZ2Pct} %`} label="du temps de course au-dessus de Z2" />
         </div>
         <p className="text-xs text-neutral-500">
-          Jugé à la FC, 3 premières minutes écartées, alerte au-delà de 15 % du temps au-dessus du plafond de zone. {r.easyAnalysed} footing(s) prévu(s)
-          analysé(s), {formatDuration(r.runSeconds)} de course répartie par zone sur {RIGOR_WEEKS} semaines.
+          Jugé à la FC, 3 premières minutes écartées, alerte au-delà de 15 % du temps au-dessus du plafond de footing (bpm absolus par type de séance, règle easy_hr_ceilings). {r.easyAnalysed} footing(s) prévu(s)
+          analysé(s) sur {RIGOR_WEEKS} semaines.
           {approx > 0 && ` Pour ${approx} sortie(s) antérieure(s) à tes premiers repères, les zones sont calculées avec les plus anciens connus (approximation).`}
         </p>
         {missing.length > 0 && (
@@ -173,6 +178,10 @@ export default function AnalysisPage() {
         >
           <ZonesChart data={zonesData} zones={zoneCount} />
         </ChartBlock>
+        <p className="text-xs text-neutral-500">
+          {formatDuration(r.runSeconds)} de course répartie par zone sur {RIGOR_WEEKS} semaines (information, pas un verdict).
+          {r.unplannedAbovePct != null && ` Sorties non planifiées (${r.unplannedAnalysed}) : ${r.unplannedAbovePct} % du temps au-dessus du plafond de footing, à titre indicatif.`}
+        </p>
         {judged.length > 0 && (
           <ul className="flex flex-col gap-1 text-sm">
             {judged.slice(0, 12).map((c) => {
@@ -234,11 +243,12 @@ export default function AnalysisPage() {
           <LoadChart data={weekly} />
         </ChartBlock>
         <ChartBlock
-          title={`Ratio aigu / chronique (7 j / 28 j) : ${currentAcwr ?? "—"} aujourd'hui, zone de confort ${low}–${high}`}
+          title={`Ratio aigu / chronique (7 j / 28 j) : ${acwrNote ? "non significatif" : currentAcwr ?? "—"} aujourd'hui, zone de confort ${low}–${high}`}
           table={<SimpleTable head={["Jour", "Ratio"]} rows={acwr.filter((_, i) => i % 7 === 6).map((d) => [d.label, d.acwr == null ? "—" : String(d.acwr)])} />}
         >
           <AcwrChart data={acwr} low={low} high={high} />
         </ChartBlock>
+        {acwrNote && <p className="text-sm text-neutral-600 dark:text-neutral-400">{acwrNote} Le ratio suppose une charge régulière : la courbe est interrompue sur les jours concernés.</p>}
         <p className="text-xs text-neutral-500">
           Sans RPE saisi, la charge utilise un RPE estimé (type de la séance prévue, sinon {loadParams.defaultRpe}) : la part estimée est indiquée dans le tableau.
         </p>

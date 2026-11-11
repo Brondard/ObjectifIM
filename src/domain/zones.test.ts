@@ -99,6 +99,18 @@ const ctx: TargetContext = {
 describe("cibles d'une séance", () => {
   const session = { date: "2026-11-10", discipline: "run", session_type: "endurance" };
 
+  it("footing : plafond en bpm absolus par type de séance quand la règle existe", () => {
+    const withCeilings: TargetContext = { ...ctx, rules: { ...ctx.rules, easyCeilings: { byType: { endurance: 150, recovery: 150, long: 150 }, longEnd: 155, longEndFromPct: 67 } } };
+    expect(resolveTargets(session, withCeilings, parse)).toEqual([
+      expect.objectContaining({ status: "ok", basis: "hr", zone: null, min: null, max: 150, source: "ceiling" }),
+    ]);
+    expect(resolveTargets({ ...session, session_type: "long" }, withCeilings, parse)).toEqual([
+      expect.objectContaining({ max: 150, max_end: 155, end_from_pct: 67, source: "ceiling" }),
+    ]);
+    // Une séance qualitative garde ses zones.
+    expect(resolveTargets({ ...session, session_type: "threshold" }, withCeilings, parse)[0].source).toBe("default");
+  });
+
   it("footing : FC zone 2 par défaut, en bpm", () => {
     expect(resolveTargets(session, ctx, parse)).toEqual([
       expect.objectContaining({ status: "ok", basis: "hr", zone: 2, min: 116, max: 136, source: "default", method: "pct_hrmax" }),

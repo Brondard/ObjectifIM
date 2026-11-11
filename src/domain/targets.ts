@@ -19,7 +19,14 @@ export type TargetRules = {
   judgementByType: Record<string, string>;
   /** Paramètres du jugement sur les flux (règle intensity_judgement). */
   intensity?: { skipFirstS: number; alertPct: number };
+  /**
+   * Plafonds de FC absolus des séances faciles de course (règle easy_hr_ceilings) : ils remplacent la borne
+   * de zone, trop basse quand les zones suivent la méthode de la montre.
+   */
+  easyCeilings?: EasyCeilings;
 };
+
+export type EasyCeilings = { byType: Record<string, number>; longEnd?: number | null; longEndFromPct?: number | null };
 
 export type TargetContext = { models: ZoneModel[]; metrics: Metric[]; rules: TargetRules };
 
@@ -30,9 +37,12 @@ export type ResolvedTarget =
       zone: number | null;
       min: number | null;
       max: number | null;
-      source: "session" | "default";
+      source: "session" | "default" | "ceiling";
       method: Method | null;
       references: Reference[];
+      /** Plafond relevé en fin de séance (sortie longue) et à partir de quel % du temps. */
+      max_end?: number | null;
+      end_from_pct?: number | null;
     }
   | { status: "no_model"; basis: Basis; zone: number; source: "session" | "default" }
   | { status: "missing_metrics"; basis: Basis; zone: number; method: Method; missing: MetricKind[]; source: "session" | "default" };
@@ -104,7 +114,27 @@ export function resolveTargets(session: SessionLike, ctx: TargetContext, parse: 
     const r = resolveIntensity(session, explicit, ctx);
     return r ? [r] : [];
   }
+  const ceiling = session.discipline === "run" ? easyCeiling(session.session_type, ctx.rules.easyCeilings) : null;
+  if (ceiling) return [ceiling];
   const zone = ctx.rules.defaultZoneByType[session.session_type];
   if (zone == null) return [];
   return judgementBases(session, ctx).map((basis) => resolveZone(session, basis, zone, "default", ctx));
+}
+
+/** Plafond absolu d'une séance facile de course, s'il est défini pour son type. */
+export function easyCeiling(sessionType: string, c: EasyCeilings | undefined): ResolvedTarget | null {
+  const max = c?.byType[sessionType];
+  if (!max) return null;
+  const long = sessionType === "long" && c?.longEnd;
+  return {
+    status: "ok", basis: "hr", zone: null, min: null, max, source: "ceiling", method: null, references: [],
+    ...(long ? { max_end: c!.longEnd, end_from_pct: c!.longEndFromPct ?? 67 } : {}),
+  };
+}
+
+/** Paramètres de la règle easy_hr_ceilings → plafonds ; undefined si la règle est vide. */
+export function ceilingsFrom(p: Record<string, unknown>): EasyCeilings | undefined {
+  const byType = (p.by_type ?? {}) as Record<string, number>;
+  if (!Object.keys(byType).length) return undefined;
+  return { byType, longEnd: (p.long_end as number | undefined) ?? null, longEndFromPct: (p.long_end_from_pct as number | undefined) ?? null };
 }

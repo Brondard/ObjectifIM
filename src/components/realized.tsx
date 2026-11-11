@@ -85,7 +85,7 @@ export function IntensityVerdict({ analysis, compact = false }: { analysis: Inte
   const ceiling =
     analysis.basis === "pace"
       ? `${formatClock(analysis.target.min ?? 0)} /km`
-      : `${analysis.target.max} ${analysis.basis === "hr" ? "bpm" : "W"}`;
+      : `${analysis.target.max} ${analysis.basis === "hr" ? "bpm" : "W"}${analysis.target.max_end ? ` (${analysis.target.max_end} en fin de sortie)` : ""}`;
   const text =
     analysis.verdict === "too_hard"
       ? `↑ Trop intense : ${analysis.above_pct} % du temps au-delà de ${ceiling}`
@@ -100,7 +100,7 @@ export function IntensityVerdict({ analysis, compact = false }: { analysis: Inte
     <div className={`rounded-md p-2 text-sm ${off ? "bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300" : "bg-neutral-100 dark:bg-neutral-900"}`}>
       <p className="font-medium">{text}</p>
       <p className="text-xs opacity-80">
-        Jugé sur : {unit} · cible {formatRange(analysis.basis, analysis.target.min, analysis.target.max)} · moyenne {mean} ·{" "}
+        Jugé sur : {unit} · cible {formatRange(analysis.basis, analysis.target.min, analysis.target.max)}{analysis.target.max_end ? `, ${analysis.target.max_end} bpm à partir de ${analysis.target.end_from_pct ?? 67} % de la séance` : ""} · moyenne {mean} ·{" "}
         {formatDuration(analysis.analysed_s)} analysées
         {analysis.basis === "hr" ? " (3 premières minutes écartées)" : ""}
         {analysis.basis === "pace" ? " · sans correction de pente ni de chaleur" : ""}

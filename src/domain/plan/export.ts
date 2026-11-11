@@ -24,6 +24,8 @@ export function buildExport(input: {
   niggleEntries: NiggleEntryLike[];
   notes: { date: string; note: string | null }[];
   loadParams: LoadParams;
+  /** Dates des courses : une course dans la fenêtre rend le ratio de charge non significatif. */
+  raceDates?: string[];
 }) {
   const { from, to } = input;
   const weeks: string[] = [];
@@ -35,7 +37,7 @@ export function buildExport(input: {
   const adherence = adherenceByWeek(input.planned, input.completed, weeks, addDays(to as LocalDate, 1));
   const disciplines = [...new Set(input.planned.map((p) => p.discipline))];
   const days = dailyLoads(input.completedForLoad.map((c) => ({ ...c, session_type: typeOf(c) })), addDays(from as LocalDate, -28), to, input.loadParams);
-  const acwr = acwrSeries(days);
+  const acwr = acwrSeries(days, input.raceDates ?? []);
   const r = rigor(input.completed.map((c) => ({ local_date: c.local_date, discipline: c.discipline, planned_type: typeOf(c), analysis: analysisOf(c) })), weeks.length);
 
   return {
@@ -63,7 +65,7 @@ export function buildExport(input: {
       easy_runs_analysed: r.easyAnalysed,
       easy_runs_too_hard_pct: r.easyTooHardPct,
       mean_time_above_ceiling_pct: r.meanAboveCeilingPct,
-      run_time_above_z2_pct: r.aboveZ2Pct,
+      unplanned_run_time_above_ceiling_pct: r.unplannedAbovePct,
       sessions: input.completed
         .filter((c) => c.planned_session_id && analysisOf(c)?.intensity)
         .map((c) => {
@@ -78,6 +80,7 @@ export function buildExport(input: {
     load: {
       weeks: weeks.map((w) => ({ week: w, ...foster(days.filter((d) => d.date >= w && d.date <= addDays(w as LocalDate, 6))) })),
       acwr_end: acwr.at(-1)?.acwr ?? null,
+      acwr_end_unreliable: acwr.at(-1)?.unreliable ?? null,
     },
     sessions: input.planned
       .filter((p) => !p.deleted_at)

@@ -6,6 +6,7 @@
 import { addDays, diffDays, formatLocalDate, isoWeekday, weekStart, type LocalDate } from "@/lib/time";
 
 const fr = (d: string) => formatLocalDate(d as LocalDate, { weekday: "long", day: "numeric" });
+import { acwrUnreliable } from "../analysis/load";
 import type { EngineContext, EngineSession, RuleConfig, Violation } from "./types";
 
 export class Rules {
@@ -228,7 +229,10 @@ const DEFAULT_RPE: Record<string, number> = {
   short_reps: 8, race: 9, strength_push: 5, strength_pull: 5, strength_legs: 6, strength_core: 4, other: 4,
 };
 
-/** Charge (RPE × minutes, Foster) : réalisée sur 4 semaines contre semaine en cours, prévu compris. */
+/**
+ * Charge (RPE × minutes, Foster) : réalisée sur 4 semaines contre semaine en cours, prévu compris.
+ * null si le ratio n'est pas interprétable (course ou arrêt dans la fenêtre) : le moteur ne s'en sert pas.
+ */
 export function acwr(ctx: EngineContext, rules: Rules, weekSessions: EngineSession[], start: string): number | null {
   const rpeByType = rules.p<Record<string, number>>("planned_rpe_by_type", "by_type", DEFAULT_RPE);
   const defaultRpe = rules.p<number>("planned_rpe_by_type", "default_done_rpe", 4);
@@ -239,6 +243,8 @@ export function acwr(ctx: EngineContext, rules: Rules, weekSessions: EngineSessi
   const chronicFrom = addDays(start as LocalDate, -28);
   const chronic = doneLoad(chronicFrom, addDays(start as LocalDate, -1)) / 4;
   if (chronic <= 0) return null;
+  const daily = Array.from({ length: 28 }, (_, k) => { const d = addDays(chronicFrom, k); return doneLoad(d, d); });
+  if (acwrUnreliable(daily, chronicFrom, addDays(start as LocalDate, 6), ctx.raceDates ?? ctx.aRaceDates)) return null;
   const acute =
     doneLoad(start, addDays(ctx.today as LocalDate, -1)) +
     weekSessions

@@ -16,13 +16,14 @@ export function ExportPanel() {
   const [json, setJson] = useState<string | null>(null);
 
   async function build() {
-    const [planned, completed, niggles, entries, logs, rules] = await Promise.all([
+    const [planned, completed, niggles, entries, logs, rules, races] = await Promise.all([
       db.planned_sessions.where("date").between(from, to, true, true).toArray(),
       db.completed_sessions.where("local_date").between(addDays(from as LocalDate, -28), to, true, true).toArray(),
       db.niggles.toArray(),
       db.niggle_entries.toArray(),
       db.daily_logs.where("date").between(from, to, true, true).toArray(),
       db.engine_rules.where("rule_key").equals("planned_rpe_by_type").toArray(),
+      db.races.toArray(),
     ]);
     const live = <T extends { deleted_at: string | null }>(r: T[]) => r.filter((x) => !x.deleted_at);
     const rp = (rules[0]?.params ?? {}) as { default_done_rpe?: number; by_type?: Record<string, number> };
@@ -34,6 +35,7 @@ export function ExportPanel() {
       niggles: live(niggles), niggleEntries: live(entries),
       notes: live(logs).map((l) => ({ date: l.date, note: l.note })),
       loadParams: { defaultRpe: rp.default_done_rpe ?? 4, rpeByType: rp.by_type ?? {} },
+      raceDates: live(races).map((r) => r.date),
     });
     setJson(JSON.stringify(out, null, 2));
   }

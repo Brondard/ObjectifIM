@@ -23,6 +23,8 @@ export type SessionAnalysis = {
   drift: { pct: number; analysed_s: number; mode: "pace" | "power" } | null;
   cadence: { early: number; late: number; drop_pct: number } | null;
   blocks: { index: number; target_min: number; target_max: number; actual: number; delta_s: number }[] | null;
+  /** Sortie de course non planifiée, comparée au plafond de footing : information, jamais un verdict. */
+  unplanned_easy?: IntensityAnalysis | null;
   /** Empreinte des repères, zones et règles utilisés : si elle change, l'analyse est recalculée. */
   ctx_key: string;
   /** Meilleurs efforts de la séance (records) : temps par distance en course, puissance par durée à vélo. */
@@ -45,13 +47,18 @@ export type Rigor = {
   easyTooHardPct: number | null;
   meanAboveCeilingPct: number | null;
   runSeconds: number;
-  /** Part du temps de course par zone de FC (Z1…Zn), en %. */
+  /** Part du temps de course par zone de FC (Z1…Zn), en %. Information, pas un verdict. */
   zoneShares: number[] | null;
-  aboveZ2Pct: number | null;
+  /** Sorties non planifiées : part du temps au-dessus du plafond de footing (information seulement). */
+  unplannedAnalysed: number;
+  unplannedAbovePct: number | null;
+  /** Verdict uniquement sur les footings prévus et analysés ; sinon « pas encore de données ». */
   sentence: string;
 };
 
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : null);
+
+export const RIGOR_NO_DATA = "Pas encore de données : aucun footing prévu n'a été analysé sur la période (il faut une séance planifiée rattachée, des flux et une FC fiable).";
 
 export function rigor(rows: RigorInput[], weeks: number): Rigor {
   const easy = rows.filter((r) => r.discipline === "run" && r.planned_type && EASY_TYPES.has(r.planned_type) && r.analysis?.intensity);
@@ -65,14 +72,15 @@ export function rigor(rows: RigorInput[], weeks: number): Rigor {
   const totals = Array.from({ length: n }, (_, k) => zoned.reduce((a, r) => a + (r.analysis!.zones!.seconds[k] ?? 0), 0));
   const runSeconds = totals.reduce((a, b) => a + b, 0);
   const zoneShares = runSeconds ? totals.map((t) => Math.round((t / runSeconds) * 1000) / 10) : null;
-  const aboveZ2 = runSeconds ? pct(totals.slice(2).reduce((a, b) => a + b, 0), runSeconds) : null;
 
-  const parts: string[] = [];
-  if (easy.length) parts.push(`sur les ${weeks} dernières semaines, ${pct(tooHard, easy.length)} % de tes footings faciles (${tooHard} sur ${easy.length}) ont été courus au-dessus de la zone cible`);
-  if (aboveZ2 != null) parts.push(`${aboveZ2} % de ton temps de course est au-dessus de la zone 2`);
-  const sentence = parts.length
-    ? parts.join(" ; ").replace(/^./, (c) => c.toUpperCase()) + "."
-    : "Pas encore assez de séances analysées : il faut des footings rattachés à une séance prévue, des flux et des zones de FC configurées.";
+  // Sorties sans séance prévue : pondérées par le temps analysé, jamais mêlées au verdict.
+  const unplanned = rows.filter((r) => r.discipline === "run" && !r.planned_type && r.analysis?.unplanned_easy);
+  const uTotal = unplanned.reduce((a, r) => a + r.analysis!.unplanned_easy!.analysed_s, 0);
+  const uAbove = unplanned.reduce((a, r) => a + (r.analysis!.unplanned_easy!.analysed_s * r.analysis!.unplanned_easy!.above_pct) / 100, 0);
+
+  const sentence = easy.length
+    ? `Sur les ${weeks} dernières semaines, ${pct(tooHard, easy.length)} % de tes footings prévus (${tooHard} sur ${easy.length}) ont dépassé leur plafond plus de 15 % du temps.`
+    : RIGOR_NO_DATA;
 
   return {
     easyAnalysed: easy.length,
@@ -81,7 +89,8 @@ export function rigor(rows: RigorInput[], weeks: number): Rigor {
     meanAboveCeilingPct: meanAbove,
     runSeconds,
     zoneShares,
-    aboveZ2Pct: aboveZ2,
+    unplannedAnalysed: unplanned.length,
+    unplannedAbovePct: uTotal ? Math.round((uAbove / uTotal) * 100) : null,
     sentence,
   };
 }

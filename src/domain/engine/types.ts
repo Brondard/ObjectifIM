@@ -57,6 +57,8 @@ export type EngineContext = {
   phaseType: string | null;
   phaseParams: Record<string, unknown>;
   aRaceDates: string[];
+  /** Toutes les courses (A, B, C) : une course rend le ratio de charge non interprétable. */
+  raceDates?: string[];
   substitutions: Substitution[];
   /** Rattrapages déjà faits dans la semaine (journal plan_changes). */
   catchupsThisWeek: number;

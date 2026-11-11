@@ -17,13 +17,16 @@ export function useTargets(session: SessionLike): ResolvedTarget[] | undefined {
 /** Libellé court : « Z2 · 116–136 bpm ». */
 export function targetLabel(t: ResolvedTarget): string {
   const zone = t.zone != null ? `Z${t.zone} ` : "";
-  if (t.status === "ok") return `${zone}${t.zone != null ? "· " : ""}${formatRange(t.basis, t.min, t.max)}`;
+  if (t.status === "ok") {
+    const end = t.max_end ? ` (${t.max_end} bpm sur le dernier ${t.end_from_pct && t.end_from_pct >= 60 && t.end_from_pct <= 70 ? "tiers" : `${100 - (t.end_from_pct ?? 67)} %`})` : "";
+    return `${zone}${t.zone != null ? "· " : ""}${formatRange(t.basis, t.min, t.max)}${end}`;
+  }
   return zone.trim();
 }
 
 /** Le contexte qui donne son sens au chiffre : méthode et repères à la date de la séance. */
 function targetContext(t: ResolvedTarget): string {
-  const origin = t.source === "default" ? "cible par défaut du type de séance" : "cible de la séance";
+  const origin = t.source === "ceiling" ? "plafond de footing (Réglages → règle easy_hr_ceilings)" : t.source === "default" ? "cible par défaut du type de séance" : "cible de la séance";
   if (t.status === "no_model") return `${origin} · zones ${BASES[t.basis]} non configurées`;
   if (t.status === "missing_metrics") return `${origin} · repère manquant : ${t.missing.map((k) => METRICS[k].label).join(", ")}`;
   if (!t.method) return origin;
