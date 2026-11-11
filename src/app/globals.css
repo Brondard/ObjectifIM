@@ -34,11 +34,11 @@ body {
   --viz-band: #eeedea;
   --viz-alert: #c62828;
   /* Rampe séquentielle d'un seul bleu : Z1 (facile) → Z5 (intense). */
-  --viz-z1: #cfe0f6;
-  --viz-z2: #9cc0ee;
-  --viz-z3: #5f9ae3;
-  --viz-z4: #2a78d6;
-  --viz-z5: #174a86;
+  --viz-z1: #6f9fe0;
+  --viz-z2: #4a86d8;
+  --viz-z3: #2a6fc9;
+  --viz-z4: #1d58a3;
+  --viz-z5: #123e75;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -48,10 +48,10 @@ body {
     --viz-axis: #c3c2b7;
     --viz-band: #262624;
     --viz-alert: #ef6b6b;
-    --viz-z1: #1d3756;
-    --viz-z2: #24528a;
-    --viz-z3: #3987e5;
-    --viz-z4: #7ab0f0;
-    --viz-z5: #c4dcf8;
+    --viz-z1: #4a7fc4;
+    --viz-z2: #6898dc;
+    --viz-z3: #8db3ec;
+    --viz-z4: #b4cff4;
+    --viz-z5: #dce9fb;
   }
 }

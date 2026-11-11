@@ -29,17 +29,21 @@ export function ChartBlock({ title, children, table }: { title: string; children
   );
 }
 
-const hours = (v: number) => `${Math.round(v * 10) / 10} h`;
+const number = (v: number) => new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(v);
+const hours = (v: number) => `${number(v)} h`;
+const hoursTick = (v: number) => hours(v);
+/** Le texte de légende garde la couleur du texte ; seule la pastille porte la couleur de la série. */
+const legendText = (value: string) => <span style={{ color: "var(--viz-axis)" }}>{value}</span>;
 
 export function VolumeChart({ data }: { data: { label: string; planned: number; done: number }[] }) {
   return (
     <ResponsiveContainer>
-      <BarChart data={data} barGap={2} margin={{ top: 8, right: 4, left: -16, bottom: 0 }}>
+      <BarChart data={data} barGap={2} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--viz-grid)" />
         <XAxis dataKey="label" {...axis} />
-        <YAxis {...axis} tickFormatter={(v) => `${v}`} unit=" h" width={44} />
+        <YAxis {...axis} tickFormatter={hoursTick} width={48} allowDecimals />
         <Tooltip {...tooltipStyle} formatter={(v, name) => [hours(Number(v)), String(name)]} />
-        <Legend iconType="square" wrapperStyle={{ fontSize: 12 }} />
+        <Legend iconType="square" wrapperStyle={{ fontSize: 12 }} formatter={legendText} />
         <Bar dataKey="planned" name="Prévu" fill="var(--viz-planned)" radius={[4, 4, 0, 0]} maxBarSize={18} />
         <Bar dataKey="done" name="Réalisé" fill="var(--viz-done)" radius={[4, 4, 0, 0]} maxBarSize={18} />
       </BarChart>
@@ -50,12 +54,12 @@ export function VolumeChart({ data }: { data: { label: string; planned: number; 
 export function ZonesChart({ data, zones }: { data: Record<string, number | string>[]; zones: number }) {
   return (
     <ResponsiveContainer>
-      <BarChart data={data} margin={{ top: 8, right: 4, left: -16, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--viz-grid)" />
         <XAxis dataKey="label" {...axis} />
-        <YAxis {...axis} unit=" h" width={44} />
+        <YAxis {...axis} tickFormatter={hoursTick} width={48} allowDecimals />
         <Tooltip {...tooltipStyle} formatter={(v, name) => [hours(Number(v)), String(name)]} />
-        <Legend iconType="square" wrapperStyle={{ fontSize: 12 }} />
+        <Legend iconType="square" wrapperStyle={{ fontSize: 12 }} formatter={legendText} />
         {Array.from({ length: zones }, (_, i) => (
           <Bar
             key={i}
@@ -77,10 +81,10 @@ export function ZonesChart({ data, zones }: { data: Record<string, number | stri
 export function LoadChart({ data }: { data: { label: string; load: number; estimated: number }[] }) {
   return (
     <ResponsiveContainer>
-      <BarChart data={data} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
+      <BarChart data={data} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--viz-grid)" />
         <XAxis dataKey="label" {...axis} />
-        <YAxis {...axis} width={44} />
+        <YAxis {...axis} width={48} />
         <Tooltip
           {...tooltipStyle}
           formatter={(v, _n, item) => [
@@ -98,12 +102,12 @@ export function AcwrChart({ data, low, high }: { data: { label: string; acwr: nu
   const max = Math.max(high + 0.3, ...data.map((d) => d.acwr ?? 0));
   return (
     <ResponsiveContainer>
-      <LineChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+      <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="var(--viz-grid)" />
         {/* Zone de confort entre les deux seuils d'alerte. */}
         <ReferenceArea y1={low} y2={high} fill="var(--viz-band)" fillOpacity={0.8} />
         <XAxis dataKey="label" {...axis} interval="preserveStartEnd" minTickGap={24} />
-        <YAxis {...axis} domain={[0, Math.ceil(max * 10) / 10]} width={44} />
+        <YAxis {...axis} domain={[0, Math.ceil(max * 10) / 10]} width={48} tickFormatter={(v) => number(v)} />
         <Tooltip {...tooltipStyle} formatter={(v) => [String(v), "Ratio aigu / chronique"]} />
         <Line
           type="monotone"

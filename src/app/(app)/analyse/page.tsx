@@ -61,7 +61,8 @@ export default function AnalysisPage() {
   const rigorFrom = weeks[WEEKS - RIGOR_WEEKS];
   const recent = data.completed.filter((c) => c.local_date >= rigorFrom && c.local_date <= now);
   const r = rigor(recent.map((c) => ({ local_date: c.local_date, discipline: c.discipline, planned_type: typeOf(c), analysis: storedSessionAnalysis(c) })), RIGOR_WEEKS);
-  const missing = recent.filter((c) => c.strava_activity_id && (c.discipline === "run" || c.discipline === "bike") && isStale(c, ctx));
+  // On analyse toute la période affichée (8 semaines), pas seulement celle de l'encart (4 semaines).
+  const missing = data.completed.filter((c) => c.local_date >= from && c.local_date <= now && c.strava_activity_id && (c.discipline === "run" || c.discipline === "bike") && isStale(c, ctx));
   const approx = recent.filter((c) => c.discipline === "run" && storedSessionAnalysis(c)?.zones?.approx).length;
 
   async function prepare() {
