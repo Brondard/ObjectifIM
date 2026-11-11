@@ -6,7 +6,7 @@ import { analyzeIntensity, EASY_TYPES } from "../intensity";
 import { parseIntensity, SessionStructure } from "../session-structure";
 import type { Streams } from "../strava";
 import { resolveTargets, type TargetContext } from "../targets";
-import { computeZones, zoneModelAt, type Basis } from "../zones";
+import { computeZones, isApproximate, zoneModelAt, type Basis } from "../zones";
 import { SESSION_ANALYSIS_VERSION, type SessionAnalysis } from "./rigor";
 import { blockPaces, cadenceDrop, cardiacDrift, timeInZones } from "./streams";
 
@@ -25,6 +25,24 @@ export type AnalysisPlanned = {
   target_intensity: unknown;
   structure: unknown;
 };
+
+const EARLIEST = { earliest: true };
+
+/**
+ * Empreinte de tout ce qui change le résultat d'une analyse hors des flux : repères, modèles de zones,
+ * règles de jugement. Une analyse dont l'empreinte diffère est périmée et se recalcule.
+ */
+export function contextKey(ctx: TargetContext): string {
+  const metrics = ctx.metrics.filter((m) => !m.deleted_at).map((m) => [m.kind, Number(m.value), m.measured_on]).sort();
+  const models = ctx.models
+    .filter((m) => !m.deleted_at)
+    .map((m) => [m.discipline, m.basis, m.method, m.valid_from, m.bounds, m.overrides ?? null])
+    .sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  const text = JSON.stringify([metrics, models, ctx.rules]);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193) >>> 0;
+  return h.toString(36);
+}
 
 const has = (s: Streams, k: keyof Streams) => Array.isArray(s[k]) && (s[k] as unknown[]).some((v) => typeof v === "number" && v > 0);
 
@@ -50,11 +68,14 @@ export function analyzeSession(c: AnalysisCompletion, planned: AnalysisPlanned |
     : null;
   let zones: SessionAnalysis["zones"] = null;
   if (basis) {
-    const model = zoneModelAt(ctx.models, c.discipline, basis, c.local_date);
-    const computed = model ? computeZones(model, ctx.metrics, c.local_date) : null;
+    const model = zoneModelAt(ctx.models, c.discipline, basis, c.local_date, EARLIEST);
+    const computed = model ? computeZones(model, ctx.metrics, c.local_date, EARLIEST) : null;
     if (model && computed?.ok) {
       const t = timeInZones(streams, basis, computed.zones, basis === "hr" ? params.skipFirstS : 0);
-      zones = { basis, method: model.method, seconds: t.seconds, outside: t.outside, bounds: computed.zones };
+      zones = {
+        basis, method: model.method, seconds: t.seconds, outside: t.outside, bounds: computed.zones,
+        approx: isApproximate(c.local_date, model, computed.references),
+      };
     }
   }
 
@@ -70,5 +91,5 @@ export function analyzeSession(c: AnalysisCompletion, planned: AnalysisPlanned |
   const structure = planned?.structure ? SessionStructure.safeParse(planned.structure) : null;
   const blocks = structure?.success ? blockPaces(streams, structure.data) : null;
 
-  return { version: SESSION_ANALYSIS_VERSION, intensity, zones, drift: drift && c.discipline === "bike" && drift.mode === "pace" ? null : drift, cadence, blocks };
+  return { version: SESSION_ANALYSIS_VERSION, ctx_key: contextKey(ctx), intensity, zones, drift: drift && c.discipline === "bike" && drift.mode === "pace" ? null : drift, cadence, blocks };
 }

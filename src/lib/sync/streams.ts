@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SESSION_ANALYSIS_VERSION, type SessionAnalysis } from "@/domain/analysis/rigor";
-import { analyzeSession } from "@/domain/analysis/session";
+import { analyzeSession, contextKey } from "@/domain/analysis/session";
 import type { IntensityAnalysis } from "@/domain/intensity";
 import type { Streams } from "@/domain/strava";
 import type { TargetContext } from "@/domain/targets";
@@ -46,6 +46,9 @@ export const storedSessionAnalysis = (c: CompletedSession | null): SessionAnalys
   return a?.version === SESSION_ANALYSIS_VERSION ? a : null;
 };
 
+/** Analyse absente, d'une ancienne version, ou calculée avec d'autres repères ou zones. */
+export const isStale = (c: CompletedSession, ctx: TargetContext) => storedSessionAnalysis(c)?.ctx_key !== contextKey(ctx);
+
 export const storedAnalysis = (c: CompletedSession | null): IntensityAnalysis | null => storedSessionAnalysis(c)?.intensity ?? null;
 
 /** Calcule l'analyse d'une séance à partir de ses flux et la garde sur la séance (synchronisée). */
@@ -84,11 +87,12 @@ export function useSessionAnalysis(planned: PlannedSession | null | undefined, c
   return state;
 }
 
-/** Limite par lot : Strava autorise 100 lectures par quart d'heure, on en garde pour le webhook. */
+/** Téléchargements Strava par lot : 100 lectures autorisées par quart d'heure, on en garde pour le webhook. */
 export const BATCH_LIMIT = 60;
 
 /**
- * Prépare en lot les analyses manquantes (séances avec activité Strava, sans analyse à jour).
+ * Prépare en lot les analyses manquantes ou périmées (séances avec activité Strava). Un recalcul à partir
+ * de flux déjà téléchargés ne coûte rien ; seuls les nouveaux téléchargements sont limités par lot.
  * Séquentiel, s'arrête à la première erreur Strava (limite atteinte) ; relançable sans perte.
  */
 export async function prepareAnalyses(
@@ -97,10 +101,16 @@ export async function prepareAnalyses(
   ctx: TargetContext,
   onProgress: (done: number, total: number) => void,
 ): Promise<{ analysed: number; skipped: number; stoppedOn?: string }> {
-  const todo = items.filter((i) => i.completion.strava_activity_id && !storedSessionAnalysis(i.completion)).slice(0, BATCH_LIMIT);
+  const todo = items.filter((i) => i.completion.strava_activity_id && isStale(i.completion, ctx));
   let analysed = 0;
+  let downloads = 0;
   for (const [k, item] of todo.entries()) {
     onProgress(k, todo.length);
+    const needsStrava = !item.completion.streams_path && !(await engine.db.streams.get(item.completion.id));
+    if (needsStrava && downloads >= BATCH_LIMIT) {
+      return { analysed, skipped: todo.length - k, stoppedOn: `${BATCH_LIMIT} téléchargements Strava atteints pour ce lot` };
+    }
+    if (needsStrava) downloads++;
     try {
       const r = await analyzeAndStore(engine, item.completion, item.planned, ctx);
       if (r.analysis) analysed++;

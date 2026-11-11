@@ -10,10 +10,20 @@ import { EASY_TYPES, type IntensityAnalysis } from "../intensity";
 export type SessionAnalysis = {
   version: 2;
   intensity: IntensityAnalysis | null;
-  zones: { basis: string; method: string; seconds: number[]; outside: number; bounds: { zone: number; min: number | null; max: number | null }[] } | null;
+  zones: {
+    basis: string;
+    method: string;
+    seconds: number[];
+    outside: number;
+    bounds: { zone: number; min: number | null; max: number | null }[];
+    /** Zones calculées avec des repères postérieurs à la séance (aucun n'était valable à sa date). */
+    approx: boolean;
+  } | null;
   drift: { pct: number; analysed_s: number; mode: "pace" | "power" } | null;
   cadence: { early: number; late: number; drop_pct: number } | null;
   blocks: { index: number; target_min: number; target_max: number; actual: number; delta_s: number }[] | null;
+  /** Empreinte des repères, zones et règles utilisés : si elle change, l'analyse est recalculée. */
+  ctx_key: string;
 };
 
 export const SESSION_ANALYSIS_VERSION = 2;

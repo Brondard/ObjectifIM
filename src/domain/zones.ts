@@ -85,24 +85,43 @@ export const PRESETS: Record<Method, Bound[]> = {
 
 const alive = <T extends { deleted_at?: string | null }>(rows: T[]) => rows.filter((r) => !r.deleted_at);
 
+/**
+ * Repli quand rien n'est valable à la date : prendre la plus ancienne valeur connue. Sert aux séances
+ * antérieures au premier repère saisi ; la date du repère, postérieure à la séance, rend l'approximation
+ * visible (voir isApproximate).
+ */
+export type LookupOptions = { earliest?: boolean };
+
 /** Dernière mesure d'un repère à la date donnée (incluse). */
-export function metricAt(metrics: Metric[], kind: MetricKind, date: string): Reference | null {
+export function metricAt(metrics: Metric[], kind: MetricKind, date: string, opts: LookupOptions = {}): Reference | null {
   let best: Metric | null = null;
+  let first: Metric | null = null;
   for (const m of alive(metrics)) {
-    if (m.kind !== kind || m.measured_on > date) continue;
+    if (m.kind !== kind) continue;
+    if (!first || m.measured_on < first.measured_on) first = m;
+    if (m.measured_on > date) continue;
     if (!best || m.measured_on > best.measured_on) best = m;
   }
-  return best ? { kind, value: Number(best.value), measured_on: best.measured_on } : null;
+  const hit = best ?? (opts.earliest ? first : null);
+  return hit ? { kind, value: Number(hit.value), measured_on: hit.measured_on } : null;
 }
 
 /** Modèle de zones en vigueur à la date donnée pour une discipline et une grandeur. */
-export function zoneModelAt(models: ZoneModel[], discipline: string, basis: Basis, date: string): ZoneModel | null {
+export function zoneModelAt(models: ZoneModel[], discipline: string, basis: Basis, date: string, opts: LookupOptions = {}): ZoneModel | null {
   let best: ZoneModel | null = null;
+  let first: ZoneModel | null = null;
   for (const m of alive(models)) {
-    if (m.discipline !== discipline || m.basis !== basis || m.valid_from > date) continue;
+    if (m.discipline !== discipline || m.basis !== basis) continue;
+    if (!first || m.valid_from < first.valid_from) first = m;
+    if (m.valid_from > date) continue;
     if (!best || m.valid_from > best.valid_from) best = m;
   }
-  return best;
+  return best ?? (opts.earliest ? first : null);
+}
+
+/** Vrai si un repère ou le modèle utilisé est postérieur à la date : zones approximatives. */
+export function isApproximate(date: string, model: ZoneModel, references: Reference[]): boolean {
+  return model.valid_from > date || references.some((r) => r.measured_on > date);
 }
 
 export type ComputedZones =
@@ -110,10 +129,10 @@ export type ComputedZones =
   | { ok: false; missing: MetricKind[] };
 
 /** Bornes absolues d'un modèle, avec les repères qui ont servi au calcul. */
-export function computeZones(model: ZoneModel, metrics: Metric[], date: string): ComputedZones {
+export function computeZones(model: ZoneModel, metrics: Metric[], date: string, opts: LookupOptions = {}): ComputedZones {
   if (model.overrides?.length) return { ok: true, zones: model.overrides, references: [] };
 
-  const refs = METHOD_REFERENCES[model.method].map((k) => metricAt(metrics, k, date));
+  const refs = METHOD_REFERENCES[model.method].map((k) => metricAt(metrics, k, date, opts));
   const missing = METHOD_REFERENCES[model.method].filter((_, i) => !refs[i]);
   if (missing.length) return { ok: false, missing };
   const references = refs as Reference[];

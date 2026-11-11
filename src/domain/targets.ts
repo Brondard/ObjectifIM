@@ -9,6 +9,9 @@
 import type { Intensity } from "./session-structure";
 import { computeZones, metricAt, zoneModelAt, type Basis, type Method, type Metric, type MetricKind, type Reference, type ZoneModel } from "./zones";
 
+/** Séance antérieure aux premiers repères : on prend les plus anciens, et leur date le montre. */
+const EARLIEST = { earliest: true };
+
 export type TargetRules = {
   /** Type de séance → numéro de zone (null : pas de cible par défaut). */
   defaultZoneByType: Record<string, number | null>;
@@ -48,6 +51,8 @@ export function judgementBases(session: SessionLike, ctx: TargetContext): Basis[
       return ["swim_pace"];
     case "bike": {
       // Puissance si une FTP et un modèle de puissance existent à la date, sinon FC.
+      // Choix de la grandeur selon ce qui existait à la date (pas de repli) : une FTP mesurée plus tard
+      // ne fait pas juger à la puissance une sortie d'avant.
       const power = metricAt(ctx.metrics, "ftp", session.date) && zoneModelAt(ctx.models, "bike", "power", session.date);
       return power ? ["power"] : ["hr"];
     }
@@ -73,9 +78,9 @@ function resolveZone(
   source: "session" | "default",
   ctx: TargetContext,
 ): ResolvedTarget {
-  const model = zoneModelAt(ctx.models, session.discipline, basis, session.date);
+  const model = zoneModelAt(ctx.models, session.discipline, basis, session.date, EARLIEST);
   if (!model) return { status: "no_model", basis, zone, source };
-  const computed = computeZones(model, ctx.metrics, session.date);
+  const computed = computeZones(model, ctx.metrics, session.date, EARLIEST);
   if (!computed.ok) return { status: "missing_metrics", basis, zone, method: model.method, missing: computed.missing, source };
   const range = computed.zones.find((z) => z.zone === zone);
   if (!range) return { status: "no_model", basis, zone, source };

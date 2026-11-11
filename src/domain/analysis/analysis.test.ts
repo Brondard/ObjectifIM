@@ -4,7 +4,7 @@ import { PRESETS, type ZoneModel } from "../zones";
 import { adherenceByWeek, skipReasons, weeksBack } from "./adherence";
 import { acwrSeries, dailyLoads, foster, sessionLoad } from "./load";
 import { rigor, type SessionAnalysis } from "./rigor";
-import { analyzeSession } from "./session";
+import { analyzeSession, contextKey } from "./session";
 import { chainSignals, niggleSignals } from "./signals";
 import { blockPaces, cadenceDrop, cardiacDrift, timeInZones } from "./streams";
 
@@ -128,6 +128,18 @@ describe("analyse d'une séance", () => {
     expect(a.zones).toBeNull(); // pas de modèle d'allure configuré : rien d'inventé
   });
 
+  it("séance antérieure aux premiers repères : zones approximatives, signalées", () => {
+    const late = { ...ctx, models: [{ ...models[0], valid_from: "2026-11-10" }], metrics: [{ kind: "hr_max", value: 194, measured_on: "2026-11-10" }] };
+    const a = analyzeSession({ ...completion, local_date: "2026-10-20" }, null, streams, late);
+    expect(a.zones).toMatchObject({ basis: "hr", approx: true });
+    expect(analyzeSession(completion, null, streams, ctx).zones?.approx).toBe(false);
+  });
+
+  it("l'empreinte change avec les repères, pas d'un appel à l'autre", () => {
+    expect(contextKey(ctx)).toBe(contextKey({ ...ctx }));
+    expect(contextKey(ctx)).not.toBe(contextKey({ ...ctx, metrics: [{ kind: "hr_max", value: 191, measured_on: "2026-01-01" }] }));
+  });
+
   it("séance imprévue : zones mais pas de verdict", () => {
     const a = analyzeSession(completion, null, streams, ctx);
     expect(a.intensity).toBeNull();
@@ -139,8 +151,8 @@ describe("rigueur : est-ce que je cours trop vite ?", () => {
   const easy = (verdict: "ok" | "too_hard", above: number, zones: number[]): SessionAnalysis => ({
     version: 2,
     intensity: { version: 1, basis: "hr", target: { min: 116, max: 136 }, analysed_s: 2700, above_pct: above, below_pct: 0, in_pct: 100 - above, mean: 130, verdict },
-    zones: { basis: "hr", method: "pct_hrmax", seconds: zones, outside: 0, bounds: [] },
-    drift: null, cadence: null, blocks: null,
+    zones: { basis: "hr", method: "pct_hrmax", seconds: zones, outside: 0, bounds: [], approx: false },
+    drift: null, cadence: null, blocks: null, ctx_key: "k",
   });
 
   it("donne une réponse chiffrée", () => {

@@ -13,7 +13,7 @@ import { formatDuration } from "@/lib/format";
 import type { CompletedSession, PlannedSession } from "@/lib/sync/db";
 import { useSync } from "@/lib/sync/provider";
 import { useTargetContext } from "@/lib/sync/queries";
-import { BATCH_LIMIT, prepareAnalyses, storedSessionAnalysis } from "@/lib/sync/streams";
+import { isStale, prepareAnalyses, storedSessionAnalysis } from "@/lib/sync/streams";
 import { addDays, formatLocalDate, today, type LocalDate } from "@/lib/time";
 
 const WEEKS = 8;
@@ -61,7 +61,8 @@ export default function AnalysisPage() {
   const rigorFrom = weeks[WEEKS - RIGOR_WEEKS];
   const recent = data.completed.filter((c) => c.local_date >= rigorFrom && c.local_date <= now);
   const r = rigor(recent.map((c) => ({ local_date: c.local_date, discipline: c.discipline, planned_type: typeOf(c), analysis: storedSessionAnalysis(c) })), RIGOR_WEEKS);
-  const missing = recent.filter((c) => c.strava_activity_id && (c.discipline === "run" || c.discipline === "bike") && !storedSessionAnalysis(c));
+  const missing = recent.filter((c) => c.strava_activity_id && (c.discipline === "run" || c.discipline === "bike") && isStale(c, ctx));
+  const approx = recent.filter((c) => c.discipline === "run" && storedSessionAnalysis(c)?.zones?.approx).length;
 
   async function prepare() {
     if (!ctx) return;
@@ -142,10 +143,11 @@ export default function AnalysisPage() {
         <p className="text-xs text-neutral-500">
           Jugé à la FC, 3 premières minutes écartées, alerte au-delà de 15 % du temps au-dessus du plafond de zone. {r.easyAnalysed} footing(s) prévu(s)
           analysé(s), {formatDuration(r.runSeconds)} de course répartie par zone sur {RIGOR_WEEKS} semaines.
+          {approx > 0 && ` Pour ${approx} sortie(s) antérieure(s) à tes premiers repères, les zones sont calculées avec les plus anciens connus (approximation).`}
         </p>
         {missing.length > 0 && (
           <button onClick={() => void prepare()} disabled={!!progress?.startsWith("Analyse")} className="self-start rounded-md border border-neutral-300 px-3 py-2 text-sm disabled:opacity-50 dark:border-neutral-700">
-            Analyser {Math.min(missing.length, BATCH_LIMIT)} séance(s) sans analyse{missing.length > BATCH_LIMIT ? ` (sur ${missing.length})` : ""}
+            Analyser ou mettre à jour {missing.length} séance(s)
           </button>
         )}
         {progress && <p className="text-sm text-neutral-600 dark:text-neutral-400">{progress}</p>}

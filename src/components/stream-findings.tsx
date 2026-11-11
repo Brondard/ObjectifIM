@@ -15,6 +15,7 @@ export function StreamFindings({ analysis, discipline }: { analysis: SessionAnal
         <div>
           <p className="text-xs text-neutral-500">
             Temps par zone ({BASES[zones.basis as keyof typeof BASES]}, {METHODS[zones.method as keyof typeof METHODS] ?? zones.method})
+            {zones.approx && " · approximatif : repères postérieurs à la séance"}
           </p>
           <div className="viz-root mt-1 flex h-3 w-full gap-[2px] overflow-hidden rounded" role="img" aria-label="Répartition du temps par zone">
             {zones.seconds.map((sec, i) =>

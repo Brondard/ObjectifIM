@@ -136,3 +136,14 @@ describe("rappels de retest", () => {
     expect(retestsDue([], [], localDate("2026-12-01")).map((r) => r.key)).toEqual(["ftp:none"]);
   });
 });
+
+describe("repli sur le premier repère connu", () => {
+  it("n'utilise une valeur postérieure que sur demande", () => {
+    const later = [{ kind: "hr_max", value: 194, measured_on: "2026-11-10" }];
+    expect(metricAt(later, "hr_max", "2026-10-01")).toBeNull();
+    expect(metricAt(later, "hr_max", "2026-10-01", { earliest: true })?.value).toBe(194);
+    const models = [model({ valid_from: "2026-11-10" }), model({ valid_from: "2026-12-01", method: "karvonen" })];
+    expect(zoneModelAt(models, "run", "hr", "2026-10-01")).toBeNull();
+    expect(zoneModelAt(models, "run", "hr", "2026-10-01", { earliest: true })?.method).toBe("pct_hrmax");
+  });
+});
