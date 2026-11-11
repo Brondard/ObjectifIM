@@ -4,7 +4,7 @@ import { useState } from "react";
 import { v5 as uuidv5 } from "uuid";
 import { ChartBlock, ProfileChart } from "@/components/charts";
 import { Field, inputClass } from "@/components/session-form";
-import { courseProfile, flatProfile, parseGpx, type CourseProfile } from "@/domain/race/gpx";
+import { courseProfile, flatProfile, parseGpx, repeatProfile, type CourseProfile } from "@/domain/race/gpx";
 import { DEFAULT_BIKE, DEFAULT_HR_STEPS, bikeSplits, hrCaps, runSplits, type Split } from "@/domain/race/pacing";
 import { distanceAtTime, fuelPlan } from "@/domain/race/plan";
 import { formatClock, formatHms, parseHms } from "@/lib/format";
@@ -59,7 +59,7 @@ export function LegPlanner({ race, leg, plan, defaultDistance, defaultGoal, weig
   const course: LegCourse | undefined = courses[leg];
   const params = (plan?.params ?? {}) as PlanParams;
   const [goalText, setGoalText] = useState(formatHms(params.goal_s ?? plan?.target_time_s ?? defaultGoal ?? null).replace("—", ""));
-  const [distanceKm, setDistanceKm] = useState(String((params.distance_m ?? course?.distance_m ?? defaultDistance ?? 0) / 1000 || ""));
+  const [distanceKm, setDistanceKm] = useState(String((params.distance_m ?? defaultDistance ?? course?.distance_m ?? 0) / 1000 || ""));
   const [protocolId, setProtocolId] = useState(plan?.protocol_id ?? protocols[0]?.id ?? "");
   const [bike, setBike] = useState(params.bike ?? { cda: DEFAULT_BIKE.cda, crr: DEFAULT_BIKE.crr, mass_kg: (weight ?? 75) + 9 });
   const [error, setError] = useState<string | null>(null);
@@ -67,7 +67,11 @@ export function LegPlanner({ race, leg, plan, defaultDistance, defaultGoal, weig
 
   const goal = parseHms(goalText);
   const distance = Math.round(Number(distanceKm.replace(",", ".")) * 1000);
-  const profile: CourseProfile | null = course ?? (distance > 0 ? flatProfile(distance) : null);
+  // GPX plus court que la course (tracé d'une boucle) : parcours répété jusqu'à la distance de la course.
+  const loops = course && distance > 0 && Math.abs(distance - course.distance_m) > 50 ? distance / course.distance_m : null;
+  const profile: CourseProfile | null = course
+    ? (loops ? repeatProfile(course, distance) : course)
+    : distance > 0 ? flatProfile(distance) : null;
   const result = profile && goal ? computeLeg(leg, profile, goal, bike, lthr) : null;
   const protocol = protocols.find((p) => p.id === protocolId) ?? null;
   const fuel = result && goal && protocol && leg !== "swim"
@@ -87,7 +91,15 @@ export function LegPlanner({ race, leg, plan, defaultDistance, defaultGoal, weig
       if (!e) gpx_path = path;
     }
     await engine.mutate("races", race.id, { course: { ...courses, [leg]: { ...prof, gpx_path, file_name: file.name } } });
-    setDistanceKm(String(prof.distance_m / 1000));
+    if (!distance) setDistanceKm(String(prof.distance_m / 1000));
+  }
+
+  async function removeGpx() {
+    if (!course || !window.confirm("Retirer ce parcours GPX ? Le plan repassera sur un parcours plat.")) return;
+    const rest = { ...courses };
+    delete rest[leg];
+    await engine.mutate("races", race.id, { course: rest });
+    if (course.gpx_path && navigator.onLine) await engine.supabase.storage.from("gpx").remove([course.gpx_path]);
   }
 
   async function save() {
@@ -116,11 +128,18 @@ export function LegPlanner({ race, leg, plan, defaultDistance, defaultGoal, weig
             Parcours (fichier GPX){course?.file_name ? ` : ${course.file_name}` : ""}
             <input type="file" accept=".gpx,application/gpx+xml" onChange={(e) => e.target.files?.[0] && void upload(e.target.files[0])} className="text-sm" />
           </label>
+          {course && <button onClick={() => void removeGpx()} className="self-start text-red-600 underline">Retirer le GPX</button>}
           {error && <p className="text-red-600">{error}</p>}
           {course && (
             <>
+              {loops && (
+                <p className="text-amber-700 dark:text-amber-400">
+                  Le GPX fait {(course.distance_m / 1000).toFixed(1)} km pour une course de {(distance / 1000).toFixed(1)} km :
+                  parcours répété {loops.toFixed(2).replace(".", ",")} fois (boucles). Si ce n&apos;est pas un circuit en boucle, retire le GPX.
+                </p>
+              )}
               <p>
-                {(course.distance_m / 1000).toFixed(1)} km · D+ {course.gain_m} m · D− {course.loss_m} m
+                {loops ? "Boucle : " : ""}{(course.distance_m / 1000).toFixed(1)} km · D+ {course.gain_m} m · D− {course.loss_m} m
                 {course.min_ele != null && ` · altitude ${course.min_ele}–${course.max_ele} m`}
                 <span className="text-neutral-500"> (dénivelé avec seuil anti-bruit de 5 m)</span>
               </p>
@@ -147,7 +166,7 @@ export function LegPlanner({ race, leg, plan, defaultDistance, defaultGoal, weig
       <div className="grid grid-cols-2 gap-3">
         <Field label="Objectif (h:mm:ss)"><input value={goalText} onChange={(e) => { setGoalText(e.target.value); setSaved(false); }} placeholder="3:30:00" className={inputClass} /></Field>
         <Field label="Distance (km)">
-          <input inputMode="decimal" value={distanceKm} disabled={!!course} onChange={(e) => { setDistanceKm(e.target.value); setSaved(false); }} className={inputClass} />
+          <input inputMode="decimal" value={distanceKm} onChange={(e) => { setDistanceKm(e.target.value); setSaved(false); }} className={inputClass} />
         </Field>
         {leg === "bike" && (
           <>

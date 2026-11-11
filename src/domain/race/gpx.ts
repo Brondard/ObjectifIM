@@ -139,3 +139,42 @@ export function flatProfile(distance_m: number, step_m = 100): CourseProfile {
     distance_m, gain_m: 0, loss_m: 0, min_ele: null, max_ele: null, step_m, samples: [], climbs: [], has_elevation: false,
   };
 }
+
+/**
+ * Parcours en boucles : le GPX d'une boucle répété jusqu'à la distance de la course (dernière boucle
+ * tronquée). Le dénivelé et les montées sont recalculés sur le parcours complet.
+ */
+export function repeatProfile(loop: CourseProfile, target_m: number): CourseProfile {
+  if (!loop.has_elevation || loop.distance_m <= 0) return { ...flatProfile(target_m, loop.step_m) };
+  const samples: { d: number; ele: number }[] = [];
+  for (let offset = 0; offset < target_m; offset += loop.distance_m) {
+    for (const s of loop.samples) {
+      const d = offset + s.d;
+      if (d > target_m) break;
+      if (samples.length && d <= samples.at(-1)!.d) continue;
+      samples.push({ d, ele: s.ele });
+    }
+  }
+  // Point final à la distance exacte, à l'altitude correspondante dans la boucle.
+  if (samples.at(-1)!.d < target_m) {
+    const within = target_m % loop.distance_m;
+    const k = loop.samples.findIndex((s) => s.d >= within);
+    const b = loop.samples[k === -1 ? loop.samples.length - 1 : k];
+    const a = loop.samples[Math.max(0, (k === -1 ? loop.samples.length - 1 : k) - 1)];
+    const t = b.d > a.d ? (within - a.d) / (b.d - a.d) : 0;
+    samples.push({ d: Math.round(target_m), ele: Math.round((a.ele + t * (b.ele - a.ele)) * 10) / 10 });
+  }
+  const step = loop.step_m;
+  const gainPerLoop = loop.gain_m;
+  const lossPerLoop = loop.loss_m;
+  const loops = target_m / loop.distance_m;
+  return {
+    ...loop,
+    distance_m: Math.round(target_m),
+    gain_m: Math.round(gainPerLoop * loops),
+    loss_m: Math.round(lossPerLoop * loops),
+    step_m: step,
+    samples,
+    climbs: findClimbs(samples, 30, 400),
+  };
+}

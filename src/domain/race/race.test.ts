@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { courseProfile, elevationGain, findClimbs, haversine, parseGpx, type GpxPoint } from "./gpx";
+import { courseProfile, elevationGain, findClimbs, haversine, parseGpx, repeatProfile, type GpxPoint } from "./gpx";
 import { bikeSplits, DEFAULT_BIKE, DEFAULT_HR_STEPS, gradeFactor, hrCaps, runSplits, speedAt } from "./pacing";
 import { DEFAULT_TIMELINE, carbLoading, distanceAtTime, fuelPlan, morningTimeline, raceReminders } from "./plan";
 
@@ -131,5 +131,17 @@ describe("autour de la course", () => {
     ];
     expect(raceReminders(races, "2026-11-12", 80).map((r) => r.key)).toEqual(["cd:a", "carbs:a", "check:a", "debrief:b"]);
     expect(raceReminders(races, "2026-11-12", 80)[1].message).toMatch(/720 g/);
+  });
+});
+
+describe("parcours en boucles", () => {
+  it("répète une boucle jusqu'à la distance de la course", async () => {
+    const loop = courseProfile(line(9, (d) => (d < 4500 ? d / 100 : 90 - (d - 4500) / 100)));
+    const full = repeatProfile(loop, 21097);
+    expect(full.distance_m).toBe(21097);
+    expect(full.samples.at(-1)!.d).toBeLessThanOrEqual(21097);
+    expect(full.samples.at(-1)!.d).toBeGreaterThan(20900);
+    expect(full.gain_m).toBeGreaterThan(loop.gain_m * 2);
+    expect(runSplits(full, 6300).splits).toHaveLength(22);
   });
 });
