@@ -964,6 +964,7 @@ export type Database = {
           display_name: string | null
           home_lat: number | null
           home_lng: number | null
+          ics_token: string
           prefs: Json
           timezone: string
           updated_at: string
@@ -977,6 +978,7 @@ export type Database = {
           display_name?: string | null
           home_lat?: number | null
           home_lng?: number | null
+          ics_token?: string
           prefs?: Json
           timezone?: string
           updated_at?: string
@@ -990,6 +992,7 @@ export type Database = {
           display_name?: string | null
           home_lat?: number | null
           home_lng?: number | null
+          ics_token?: string
           prefs?: Json
           timezone?: string
           updated_at?: string
@@ -1816,6 +1819,9 @@ export type Database = {
     }
     Functions: {
       apply_mutations: { Args: { mutations: Json }; Returns: Json }
+      ics_token: { Args: never; Returns: string }
+      ics_user: { Args: { p_token: string }; Returns: string }
+      rotate_ics_token: { Args: never; Returns: string }
       strava_connection: {
         Args: { p_athlete?: number; p_user?: string }
         Returns: {

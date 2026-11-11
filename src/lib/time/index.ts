@@ -116,6 +116,11 @@ export function localDateFromLocalIso(value: string): LocalDate {
   return localDate(value.slice(0, 10));
 }
 
+/** Instant décalé d'un nombre de secondes (fin d'un événement). */
+export function addSeconds(instant: Date, seconds: number): Date {
+  return new Date(instant.getTime() + seconds * 1000);
+}
+
 /** Instant ISO d'un horodatage Unix en secondes (jetons OAuth). */
 export function isoFromEpochSeconds(seconds: number): string {
   return new Date(seconds * 1000).toISOString();

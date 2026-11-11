@@ -50,5 +50,5 @@ supabase/        configuration et migrations
 | 5 | Moteur de replanification | livré |
 | 6 | Analyse | livré |
 | 7 | Courses | livré |
-| 8 | PWA, hors ligne, notifications, ICS | |
+| 8 | PWA, hors ligne, notifications, ICS | livré |
 | 9 | Fonctionnalités reportées | |

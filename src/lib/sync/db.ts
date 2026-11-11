@@ -23,6 +23,7 @@ export type ChecklistItem = Tables<"checklist_items">;
 export type NutritionProduct = Tables<"nutrition_products">;
 export type NutritionProtocol = Tables<"nutrition_protocols">;
 export type ToleranceLog = Tables<"tolerance_logs">;
+export type PushSubscriptionRow = Tables<"push_subscriptions">;
 
 export type ConflictRecord = {
   key: string; // `${table}:${id}:${field}`
@@ -65,6 +66,7 @@ export class LocalDb extends Dexie {
   nutrition_products!: Table<NutritionProduct, string>;
   nutrition_protocols!: Table<NutritionProtocol, string>;
   tolerance_logs!: Table<ToleranceLog, string>;
+  push_subscriptions!: Table<PushSubscriptionRow, string>;
   outbox!: Table<OutboxEntry, number>;
   conflicts!: Table<ConflictRecord, string>;
   rejections!: Table<RejectionRecord, string>;
@@ -109,6 +111,8 @@ export class LocalDb extends Dexie {
       nutrition_protocols: "id",
       tolerance_logs: "id, product_id",
     });
+    // Jalon 8 : abonnements push de chaque appareil.
+    this.version(7).stores({ push_subscriptions: "id, endpoint" });
   }
 
   rows(table: PullTable): Table<Record<string, unknown> & { id: string }, string> {

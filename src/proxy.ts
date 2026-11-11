@@ -2,7 +2,11 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Le webhook et la tâche planifiée n'ont pas de session : ils s'authentifient autrement.
-const PUBLIC_PATHS = ["/login", "/auth", "/api/strava/webhook", "/api/strava/process"];
+// Le service worker, le manifeste et les icônes doivent répondre même sans session (installation, hors ligne).
+const PUBLIC_PATHS = [
+  "/login", "/auth", "/api/strava/webhook", "/api/strava/process", "/api/ics/", "/api/push/evening",
+  "/sw.js", "/manifest.webmanifest", "/icons/",
+];
 
 /** Rafraîchit la session Supabase à chaque requête et renvoie vers /login si elle est absente. */
 export async function proxy(request: NextRequest) {

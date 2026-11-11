@@ -6,6 +6,7 @@ import { v7 as uuidv7 } from "uuid";
 import { inputClass, Field } from "@/components/session-form";
 import { EngineRulesSettings, SubstitutionsSettings } from "@/components/engine-settings";
 import { StravaSettings } from "@/components/strava-settings";
+import { PwaSettings } from "@/components/pwa-settings";
 import { RetestList } from "@/components/targets";
 import { BASES, DISCIPLINES, METHODS, METRICS, ZONE_SETUPS } from "@/domain/labels";
 import { PRESETS, computeZones, metricAt, zoneModelAt, type Bound, type Method, type MetricKind, type ZoneModel } from "@/domain/zones";
@@ -33,6 +34,7 @@ export default function SettingsPage() {
         </nav>
       </header>
       <RetestList />
+      <PwaSettings />
       <StravaSettings />
       <MetricsSection metrics={metrics} />
       <ZonesSection metrics={metrics} models={models} />
