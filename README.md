@@ -53,4 +53,4 @@ supabase/        configuration et migrations
 | 8 | PWA, hors ligne, notifications, ICS | livré |
 | 9a | Construire le plan : import JSON/CSV/markdown idempotent, export, motifs de semaine, masse, rebours, séances types, vues Saison et Mois | livré |
 | 9b | Musculation, matériel, météo, records, revue du dimanche, horaires piscine et club, check-in allégé | livré |
-| 9 | Fonctionnalités reportées (Samsung Health, Google Agenda, lever, soleil, « il y a un an », simulateur) | |
+| 9 | Agenda personnel, heure de lever, soleil, « il y a un an », simulateur ; Samsung Health investigué ([docs/samsung-health.md](docs/samsung-health.md)) | livré |

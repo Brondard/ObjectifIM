@@ -10,6 +10,7 @@ import { useSync } from "@/lib/sync/provider";
 import { RetestList } from "@/components/targets";
 import { RaceReminders } from "@/components/race/reminders";
 import { CheckinAdvice } from "@/components/life";
+import { AgendaConflicts, WakeLine, YearAgo } from "@/components/day-extras";
 import { DISCIPLINES } from "@/domain/labels";
 import { formatDuration } from "@/lib/format";
 import { useCompletedBetween, usePlannedBetween } from "@/lib/sync/queries";
@@ -64,6 +65,7 @@ export default function TodayPage() {
 
       <CheckIn date={day} />
       {planned && <CheckinAdvice sessions={planned} />}
+      {planned && next && <AgendaConflicts sessions={[...planned, ...next]} />}
 
       <RetestList includeMissing={false} />
 
@@ -76,12 +78,17 @@ export default function TodayPage() {
               {s.title || DISCIPLINES[s.discipline as keyof typeof DISCIPLINES]} · {formatDuration(s.target_duration_s)}
             </Link>
           ))}
+          {next.slice(0, 1).map((s) => (
+            <WakeLine key={`wake-${s.id}`} session={s} />
+          ))}
         </section>
       )}
 
       {(isoWeekday(day) === 7 || isoWeekday(day) === 1) && (
         <Link href="/revue" className="self-start text-sm underline">Revue de la semaine</Link>
       )}
+
+      <YearAgo />
 
       <DayNote date={day} />
     </div>

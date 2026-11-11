@@ -6,6 +6,7 @@ import { v7 as uuidv7 } from "uuid";
 import { MatchPrompt, RealizedAnalysis } from "@/components/realized";
 import { StrengthLog } from "@/components/strength-log";
 import { EquipmentPicker, WeatherLine } from "@/components/life";
+import { DaylightLine, WakeLine } from "@/components/day-extras";
 import { planMark } from "@/domain/marking";
 import { SessionFuel } from "@/components/race/reminders";
 import { Feedback } from "@/components/session-card";
@@ -78,6 +79,8 @@ export default function SessionPage() {
       </section>
 
       <WeatherLine session={session} />
+      <DaylightLine session={session} />
+      <WakeLine session={session} />
       <SessionFuel session={session} />
 
       {session.discipline === "strength" && completions.length === 0 && (

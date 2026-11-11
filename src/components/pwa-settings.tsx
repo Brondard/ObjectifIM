@@ -4,6 +4,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useEffect, useState } from "react";
 import { v5 as uuidv5 } from "uuid";
 import { useSync, useSyncStatus } from "@/lib/sync/provider";
+import { AgendaSettings } from "./day-extras";
 import { nowIso } from "@/lib/time";
 
 type InstallEvent = Event & { prompt: () => Promise<void> };
@@ -25,6 +26,7 @@ export function PwaSettings() {
       <InstallAndOffline />
       <Notifications />
       <CalendarFeed />
+      <AgendaSettings />
     </section>
   );
 }

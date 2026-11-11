@@ -16,6 +16,7 @@ import { disciplineStyle } from "./discipline";
 import { IntensityVerdict, MatchPrompt } from "./realized";
 import { TargetLines } from "./targets";
 import { WeatherLine } from "./life";
+import { DaylightLine } from "./day-extras";
 import { storedAnalysis } from "@/lib/sync/streams";
 
 const label = <T extends Record<string, string>>(map: T, key: string) => map[key as keyof T] ?? key;
@@ -73,7 +74,7 @@ export function SessionCard({ session }: { session: PlannedSession }) {
           <TargetLines session={session} />
         </div>
         {session.instructions && <p className="mt-2 line-clamp-3 text-sm">{session.instructions}</p>}
-        <div className="mt-2"><WeatherLine session={session} /></div>
+        <div className="mt-2"><WeatherLine session={session} /><DaylightLine session={session} /></div>
       </Link>
 
       {suggested && (

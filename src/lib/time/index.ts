@@ -116,6 +116,17 @@ export function localDateFromLocalIso(value: string): LocalDate {
   return localDate(value.slice(0, 10));
 }
 
+/** Heure locale « HH:MM:SS » d'un instant, dans le fuseau donné. */
+export function localTimeOf(instant: Date | string, tz: string = APP_TZ): LocalTime {
+  const z = new TZDate(typeof instant === "string" ? Date.parse(instant) : instant.getTime(), tz);
+  return `${pad(z.getHours())}:${pad(z.getMinutes())}:${pad(z.getSeconds())}`;
+}
+
+/** Instant ISO d'un nombre de millisecondes depuis l'époque Unix. */
+export function isoFromMs(ms: number): string {
+  return new Date(ms).toISOString();
+}
+
 /** Instant décalé d'un nombre de secondes (fin d'un événement). */
 export function addSeconds(instant: Date, seconds: number): Date {
   return new Date(instant.getTime() + seconds * 1000);

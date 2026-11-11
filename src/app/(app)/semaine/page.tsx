@@ -17,6 +17,7 @@ import { v7 as uuidv7 } from "uuid";
 import { disciplineStyle } from "@/components/discipline";
 import { IntensityVerdict } from "@/components/realized";
 import { RainSwaps } from "@/components/life";
+import { AgendaConflicts } from "@/components/day-extras";
 import { ZoneTag } from "@/components/targets";
 import { storedAnalysis } from "@/lib/sync/streams";
 import { DISCIPLINES, SESSION_TYPES, type Discipline } from "@/domain/labels";
@@ -112,6 +113,7 @@ function Week() {
 
       {planned && completed && <VolumeSummary planned={planned} completed={completed} asOf={now} />}
       {planned && <RainSwaps sessions={planned} weekEnd={to} />}
+      {planned && <AgendaConflicts sessions={planned} />}
 
       <DndContext sensors={sensors} onDragEnd={(e) => void onDragEnd(e)}>
         <div className="flex flex-col gap-2 lg:grid lg:grid-cols-7 lg:gap-1">

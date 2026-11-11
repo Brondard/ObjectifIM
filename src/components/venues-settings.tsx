@@ -32,6 +32,9 @@ export function VenuesSettings() {
               <select value={v.kind} onChange={(e) => void engine.mutate("venues", v.id, { kind: e.target.value })} className={`${inputClass} h-9 w-32`} aria-label="Type de lieu">
                 {Object.entries(KINDS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
               </select>
+              <label className="flex shrink-0 items-center gap-1 text-xs">trajet
+                <input inputMode="numeric" defaultValue={v.travel_min ?? ""} onBlur={(e) => void engine.mutate("venues", v.id, { travel_min: Number(e.target.value) || null })} className="h-9 w-14 rounded border border-neutral-300 bg-transparent px-1 dark:border-neutral-700" aria-label="Trajet en minutes" /> min
+              </label>
               <button onClick={() => window.confirm("Supprimer ce lieu ?") && void engine.mutate("venues", v.id, { deleted_at: nowIso() })} className="text-xs text-neutral-500 underline">Supprimer</button>
             </div>
             <ul className="tabular-nums">

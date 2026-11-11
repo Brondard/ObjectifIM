@@ -1829,6 +1829,9 @@ export type Database = {
     }
     Functions: {
       apply_mutations: { Args: { mutations: Json }; Returns: Json }
+      calendar_connected: { Args: never; Returns: boolean }
+      calendar_set_url: { Args: { p_url: string }; Returns: undefined }
+      calendar_url: { Args: { p_user: string }; Returns: string }
       ics_token: { Args: never; Returns: string }
       ics_user: { Args: { p_token: string }; Returns: string }
       rotate_ics_token: { Args: never; Returns: string }

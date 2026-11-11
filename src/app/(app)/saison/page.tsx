@@ -41,7 +41,7 @@ export default function SeasonPage() {
     <div className="flex flex-col gap-6">
       <header className="flex items-baseline justify-between">
         <h1 className="text-xl font-semibold">Saison</h1>
-        <nav className="flex gap-3 text-sm underline"><Link href="/mois">Mois</Link><Link href="/plan">Construire le plan</Link></nav>
+        <nav className="flex gap-3 text-sm underline"><Link href="/mois">Mois</Link><Link href="/plan">Construire le plan</Link><Link href="/simulateur">Simulateur</Link></nav>
       </header>
       {data.seasons.length > 1 && (
         <div className="flex flex-wrap gap-2">

@@ -46,6 +46,9 @@ Journal des décisions validées. Le cahier des charges complet et ses arbitrage
 | D39 | Matériel Strava | Importé depuis le profil Strava : son kilométrage du jour devient le départ, seules les activités suivantes s'y ajoutent (pas de double compte). Rattachement automatique par l'équipement de l'activité. |
 | D40 | Records | Meilleurs efforts calculés sur les flux (temps sur 1, 5, 10 km, semi, marathon ; puissance 5, 20, 60 min), dans l'analyse de séance (version 3). |
 | D41 | Check-in | Deux indicateurs mauvais (seuils dans la règle `checkin_lighten`, FC de repos comparée à sa médiane des 3 semaines) : version allégée proposée (60 % de la durée, zone 1 ou 2, sans structure), appliquée seulement sur validation et journalisée. |
+| D42 | Agenda personnel | Lecture seule par l'adresse secrète iCal de Google Agenda (pas d'OAuth : jetons valables 7 jours tant que l'app n'est pas vérifiée par Google). Adresse gardée dans le schéma `private`, limitée à `calendar.google.com` (le serveur ne va rien chercher ailleurs). Récurrences quotidiennes et hebdomadaires dépliées à heure locale constante. Créneaux occupés gardés en local, rafraîchis toutes les heures. |
+| D43 | Soleil, lever | Lever et coucher du soleil calculés sans réseau (algorithme de la NOAA, à la minute près). Heure de lever = départ − préparation (règle `wake`) − trajet du lieu. |
+| D44 | Samsung Health | Pas de voie propre pour une application web (SDK Android uniquement) : check-in manuel conservé, modèle prêt pour un import futur. Détail dans `docs/samsung-health.md`. |
 | D12 | Musculation | Pas de détail des séries dans Strava (vérifié le 2026-11-10). Saisie dans l'app : « + Série » recopie la série précédente ou celle de la dernière séance ; progression par exercice (charge max, 1RM estimé d'Epley jusqu'à 12 répétitions). |
 
 ## Jugement de l'intensité (arbitrage 7)
